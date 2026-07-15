@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>体重追踪 - 健康塑形</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#F3F6F2;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:16px;max-width:960px;margin:0 auto;color:#222}
+.card{background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 1px 3px #00000010}
+h2{font-size:17px;margin-bottom:12px;font-weight:600}
+.ctrl-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.tab{padding:6px 12px;border-radius:99px;border:1px solid #ccc;background:#fff;cursor:pointer;font-size:14px;transition:all .15s}
+.tab.active{background:#2F6B4F;color:#fff;border-color:#2F6B4F}
+input,select{padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px}
+button{padding:7px 12px;border-radius:8px;border:none;cursor:pointer;font-size:14px;transition:opacity .15s}
+button:hover{opacity:.85}
+.btn-main{background:#2F6B4F;color:#fff}
+.btn-gray{background:#f0f0f0;color:#333}
+.btn-sm{padding:4px 10px;font-size:12px}
+.form-item{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.label{font-size:12px;color:#888;font-weight:500}
+.pill{display:inline-block;padding:4px 10px;border-radius:99px;font-size:12px;margin-right:6px;margin-bottom:4px}
+.pill-green{background:#d6f2e3;color:#227043}
+.pill-blue{background:#e1ecff;color:#2a5cb8}
+.pill-orange{background:#fce8d8;color:#c26c38}
+.pill-red{background:#fde2e2;color:#c0392b}
+.pill-gray{background:#f0f0f0;color:#666}
+canvas{width:100%;height:240px;background:#fff;border-radius:8px;margin:10px 0}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+td,th{padding:8px 6px;border-top:1px solid #f0f0f0;text-align:left;font-size:13px}
+th{color:#888;font-weight:500}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:8px 18px;border-radius:99px;z-index:999;font-size:14px;box-shadow:0 4px 12px #0003}
+footer{text-align:center;margin-top:20px;font-size:12px;color:#aaa}
+
+/* ====== 封面大字 ====== */
+.cover{background:linear-gradient(135deg,#2F6B4F 0%,#3d8a68 60%,#4fa37a 100%);color:#fff;border-radius:18px;padding:24px 20px;margin-bottom:14px;position:relative;overflow:hidden}
+.cover.danger{background:linear-gradient(135deg,#c0392b 0%,#e74c3c 60%,#d35400 100%)}
+.cover.warning{background:linear-gradient(135deg,#c26c38 0%,#e67e22 60%,#f39c12 100%)}
+.cover::after{content:"";position:absolute;right:-30px;top:-30px;width:160px;height:160px;border-radius:50%;background:#ffffff10}
+.cover-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.cover-weight{flex:1}
+.cover-date{font-size:12px;opacity:.85;margin-bottom:4px}
+.cover-num{font-size:52px;font-weight:800;line-height:1;letter-spacing:-1px}
+.cover-unit{font-size:20px;font-weight:400;opacity:.8;margin-left:2px}
+.cover-diff{font-size:13px;opacity:.95;margin-top:6px;line-height:1.5}
+.cover-shape{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:4px}
+.cover-shape svg{filter:drop-shadow(0 2px 6px #0002)}
+.cover-shape-label{font-size:11px;opacity:.85;background:#ffffff22;padding:2px 10px;border-radius:99px}
+.cover-stats{display:flex;gap:10px;margin-top:16px}
+.cover-stat{flex:1;background:#ffffff18;border-radius:10px;padding:10px;text-align:center}
+.cover-stat-val{font-size:20px;font-weight:700}
+.cover-stat-label{font-size:11px;opacity:.8;margin-top:2px}
+.cover-progress{margin-top:14px}
+.cover-bar{height:6px;background:#ffffff25;border-radius:3px;overflow:hidden}
+.cover-bar-fill{height:100%;background:#fff;border-radius:3px;transition:width .5s}
+.cover-bar-text{font-size:11px;opacity:.8;margin-top:4px;text-align:right}
+
+/* ====== 健康评估卡片 ====== */
+.health-alert{border-radius:12px;padding:14px 16px;margin-bottom:14px;display:flex;gap:12px;align-items:flex-start}
+.health-alert.danger{background:linear-gradient(135deg,#fff5f5,#ffe5e5);border-left:4px solid #e74c3c}
+.health-alert.warning{background:linear-gradient(135deg,#fffbf0,#fef3d7);border-left:4px solid #f39c12}
+.health-alert.good{background:linear-gradient(135deg,#f0faf4,#e0f5e8);border-left:4px solid #27ae60}
+.health-icon{font-size:28px;flex-shrink:0;line-height:1}
+.health-content{flex:1}
+.health-title{font-size:15px;font-weight:700;margin-bottom:4px}
+.health-alert.danger .health-title{color:#c0392b}
+.health-alert.warning .health-title{color:#d68910}
+.health-alert.good .health-title{color:#1e8449}
+.health-bmi{font-size:12px;color:#888;margin-bottom:6px}
+.health-desc{font-size:13px;color:#555;line-height:1.6}
+.health-risks{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.risk-tag{font-size:11px;padding:3px 8px;border-radius:6px;background:#ffffffcc;color:#c0392b}
+.health-action{margin-top:8px;font-size:12px;color:#2F6B4F;font-weight:600}
+
+/* ====== 身材选择器 ====== */
+.shape-picker{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
+.shape-card{display:flex;flex-direction:column;align-items:center;padding:8px 6px 6px;border:2px solid #e8e8e8;border-radius:12px;cursor:pointer;background:#fafafa;transition:all .15s;min-width:64px;user-select:none}
+.shape-card:hover{border-color:#2F6B4F66;background:#f0f7f3}
+.shape-card.selected{border-color:#2F6B4F;background:#e8f3ec;box-shadow:0 0 0 2px #2F6B4F22}
+.shape-card svg{display:block}
+.shape-card .shape-name{font-size:11px;margin-top:3px;color:#333;font-weight:500}
+.shape-card .shape-bmi{font-size:9px;color:#999}
+
+/* ====== 进度可视化 ====== */
+.progress-visual{display:flex;align-items:center;justify-content:center;gap:16px;padding:16px 0 8px}
+.progress-figure{position:relative;display:flex;flex-direction:column;align-items:center;transition:all .4s}
+.progress-figure .fig-label{font-size:11px;color:#888;margin-top:4px;text-align:center}
+.progress-figure .fig-weight{font-size:12px;font-weight:600;color:#333}
+.fig-current{transform-origin:bottom center;opacity:.5}
+.fig-target{opacity:1}
+.progress-arrow{font-size:24px;color:#2F6B4F;font-weight:700}
+.progress-detail{text-align:center;font-size:13px;color:#666;margin-top:8px;line-height:1.6}
+.progress-detail strong{color:#2F6B4F;font-size:16px}
+
+/* ====== BMI标尺 ====== */
+.bmi-scale{margin:12px 0 4px}
+.bmi-bar{height:14px;border-radius:7px;background:linear-gradient(to right,#5dade2 0%,#5dade2 18%,#58d68d 18%,#58d68d 45%,#f7dc6f 45%,#f7dc6f 60%,#f0b27a 60%,#f0b27a 75%,#ec7063 75%,#ec7063 100%);position:relative}
+.bmi-pointer{position:absolute;top:-4px;width:4px;height:22px;background:#222;border-radius:2px;transform:translateX(-50%);transition:left .5s}
+.bmi-labels{display:flex;justify-content:space-between;font-size:10px;color:#999;margin-top:4px}
+.bmi-labels span{text-align:center;flex:1}
+.bmi-labels span.active{color:#222;font-weight:600}
+
+/* ====== 三餐推荐 ====== */
+.meal-day{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.meal-card{flex:1;min-width:120px;background:#fafafa;border-radius:10px;padding:12px;border:1px solid #f0f0f0}
+.meal-card.protein{border-left:3px solid #e74c3c}
+.meal-card.carbs{border-left:3px solid #f39c12}
+.meal-card.veg{border-left:3px solid #27ae60}
+.meal-type{font-size:11px;color:#888;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.meal-icon{font-size:16px}
+.meal-name{font-size:14px;font-weight:600;color:#333;margin-bottom:4px}
+.meal-desc{font-size:11px;color:#999;line-height:1.4;margin-bottom:6px}
+.meal-macros{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+.macro-tag{font-size:10px;padding:2px 6px;border-radius:4px;background:#f0f0f0;color:#666}
+.macro-tag.protein{background:#fde8e8;color:#c0392b}
+.macro-tag.carbs{background:#fef3d7;color:#d68910}
+.macro-tag.fat{background:#fce8d8;color:#c26c38}
+.macro-tag.cal{background:#e8f3ec;color:#227043;font-weight:600}
+.meal-cal{font-size:12px;color:#c26c38;font-weight:600}
+.meal-actions{margin-top:6px;display:flex;gap:4px}
+
+/* ====== 卡路里计算器 ====== */
+.calc-section{margin-top:8px}
+.calc-input-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.calc-input-row label{font-size:13px;color:#555;min-width:50px}
+.calc-input-row input{flex:1;min-width:80px;padding:6px 8px;font-size:13px}
+.calc-input-row .unit{font-size:12px;color:#999}
+.calc-result{background:linear-gradient(135deg,#f0f7f3,#e8f3ec);border-radius:10px;padding:14px;margin-top:10px}
+.calc-result-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px}
+.calc-result-row.big{font-size:22px;font-weight:700;padding:8px 0}
+.calc-result-row.big .val{color:#2F6B4F}
+.calc-result-row.big.over .val{color:#d03333}
+.calc-bar{height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;margin:8px 0}
+.calc-bar-fill{height:100%;border-radius:4px;transition:width .3s}
+.calc-tip{font-size:11px;color:#888;text-align:center;margin-top:6px;line-height:1.5}
+
+/* ====== 每日建议数字 ====== */
+.daily-targets{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.daily-target{flex:1;min-width:90px;background:#f8faf9;border-radius:10px;padding:10px;text-align:center}
+.daily-target .dt-val{font-size:18px;font-weight:700;color:#2F6B4F}
+.daily-target .dt-label{font-size:10px;color:#999;margin-top:2px}
+
+/* ====== 健康进步指数排名 ====== */
+.ranking-card{padding:16px}
+.ranking-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.ranking-title h2{margin:0}
+.ranking-subtitle{font-size:11px;color:#999}
+.rank-list{display:flex;flex-direction:column;gap:10px}
+.rank-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:#fafafa;transition:all .15s;cursor:pointer}
+.rank-item:hover{background:#f0f7f3}
+.rank-item.active{background:linear-gradient(135deg,#f0f7f3,#e8f3ec);border:1px solid #2F6B4F44}
+.rank-medal{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex-shrink:0}
+.rank-1 .rank-medal{background:linear-gradient(135deg,#FFD700,#FFA500);color:#fff;box-shadow:0 2px 8px #ffd70055}
+.rank-2 .rank-medal{background:linear-gradient(135deg,#C0C0C0,#A0A0A0);color:#fff;box-shadow:0 2px 8px #c0c0c055}
+.rank-3 .rank-medal{background:linear-gradient(135deg,#CD7F32,#A0522D);color:#fff;box-shadow:0 2px 8px #cd7f3255}
+.rank-other .rank-medal{background:#f0f0f0;color:#999;font-size:14px}
+.rank-info{flex:1;min-width:0}
+.rank-name-row{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.rank-name{font-size:15px;font-weight:600}
+.rank-grade{font-size:11px;padding:2px 8px;border-radius:6px;font-weight:700}
+.grade-S{background:linear-gradient(135deg,#FFD700,#FFA500);color:#fff}
+.grade-A{background:#27ae60;color:#fff}
+.grade-B{background:#2F6B4F;color:#fff}
+.grade-C{background:#f39c12;color:#fff}
+.grade-D{background:#e67e22;color:#fff}
+.grade-E{background:#e74c3c;color:#fff}
+.grade---{background:#ccc;color:#fff}
+.rank-status{font-size:11px;color:#888}
+.rank-score{text-align:right;flex-shrink:0}
+.rank-score-num{font-size:24px;font-weight:800;color:#2F6B4F;line-height:1}
+.rank-score-label{font-size:10px;color:#999;margin-top:2px}
+.rank-bar{height:4px;background:#e8e8e8;border-radius:2px;margin-top:6px;overflow:hidden}
+.rank-bar-fill{height:100%;border-radius:2px;background:#2F6B4F;transition:width .5s}
+.rank-avatar{flex-shrink:0;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff;border:2px solid #e0e0e0;overflow:hidden}
+.rank-dims{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.rank-dim{font-size:9px;padding:1px 5px;border-radius:4px;background:#fff;color:#888}
+
+/* ====== HPI依据弹窗 ====== */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#0005;z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-box{background:#fff;border-radius:14px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto;padding:20px;box-shadow:0 8px 30px #0003}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.modal-hdr h3{font-size:17px;margin:0}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:#999;padding:0 4px}
+.modal-close:hover{color:#333}
+.modal-section{margin-bottom:14px}
+.modal-section h4{font-size:14px;margin:0 0 6px;color:#2F6B4F}
+.modal-section p{font-size:13px;line-height:1.7;color:#444;margin:0}
+.modal-section ul{margin:4px 0 0 18px;padding:0}
+.modal-section li{font-size:13px;line-height:1.7;color:#444}
+.modal-cite{font-size:11px;color:#999;margin-top:4px}
+.hpi-source-link{cursor:pointer;border-bottom:1px dashed #999;color:#2F6B4F;font-size:11px}
+.hpi-source-link:hover{color:#1a4a35}
+
+/* ====== 饮食/运动记录 ====== */
+.log-section{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.log-section{grid-template-columns:1fr}}
+.log-card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 2px #00000a10}
+.log-card h3{font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.log-input-row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.log-input-row input{flex:1;min-width:100px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px}
+.log-input-row input[type=number]{max-width:100px}
+.log-btn{padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-size:13px;white-space:nowrap}
+.log-btn-cam{background:#f0f0f0;color:#333}
+.log-btn-add{background:#2F6B4F;color:#fff}
+.log-preview{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px;color:#666}
+.log-preview img{width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid #eee}
+.log-match{background:#f0f7f3;border-radius:8px;padding:6px 10px;font-size:12px;color:#2F6B4F;margin-bottom:8px}
+.log-list{max-height:180px;overflow-y:auto}
+.log-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #f0f0f0;font-size:13px}
+.log-item:first-child{border-top:none}
+.log-item img{width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0}
+.log-item-info{flex:1;min-width:0}
+.log-item-name{font-weight:500;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-item-meta{font-size:11px;color:#999}
+.log-item-kcal{font-weight:600;color:#2F6B4F;flex-shrink:0}
+.log-item-del{background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:0 4px}
+.log-item-del:hover{color:#d03333}
+.log-sum{display:flex;justify-content:space-between;font-size:12px;color:#888;padding-top:8px;border-top:1px dashed #eee;margin-top:6px}
+.log-sum b{color:#2F6B4F;font-size:14px}
+.cal-balance{margin-top:12px;background:linear-gradient(135deg,#f0f7f3,#e8f3ec);border-radius:10px;padding:14px;display:flex;gap:12px;align-items:center}
+.cal-balance-icon{font-size:28px}
+.cal-balance-text{flex:1;font-size:13px;line-height:1.6}
+.cal-balance-num{font-size:22px;font-weight:800;color:#2F6B4F}
+.cal-balance-sub{font-size:11px;color:#888}
+.file-input{display:none}
+</style>
+</head>
+<body>
+<div id="toastBox"></div>
+<div id="app">加载中</div>
+<script>
+// ===================== 身材SVG =====================
+function bodyShapePath(shapeKey){
+    const paths = {
+        X: "M30,32 C26,36 20,48 22,62 C24,72 28,78 30,84 C24,92 18,110 22,128 L28,128 L32,92 C34,88 36,86 40,86 C44,86 46,88 48,92 L52,128 L58,128 C62,110 56,92 50,84 C52,78 56,72 58,62 C60,48 54,36 50,32 C48,40 44,44 40,44 C36,44 32,40 30,32 Z",
+        S: "M32,32 C28,38 19,52 21,66 C23,74 28,80 31,86 C24,94 17,112 23,130 L29,130 L33,92 C35,88 37,86 40,86 C43,86 45,88 47,92 L51,130 L57,130 C63,112 56,94 49,86 C52,80 57,74 59,66 C61,52 52,38 48,32 C46,42 43,46 40,46 C37,46 34,42 32,32 Z",
+        H: "M28,32 C24,36 22,48 24,64 C25,76 27,82 29,86 C24,94 20,112 24,130 L30,130 L34,90 C36,86 38,85 40,85 C42,85 44,86 46,90 L50,130 L56,130 C60,112 56,94 51,86 C53,82 55,76 56,64 C58,48 56,36 52,32 C50,38 46,42 40,42 C34,42 30,38 28,32 Z",
+        A: "M34,32 C31,36 26,48 27,62 C28,72 30,80 33,86 C26,96 20,114 22,130 L28,130 L33,92 C36,88 38,86 40,86 C42,86 44,88 47,92 L52,130 L58,130 C60,114 54,96 47,86 C50,80 53,72 54,62 C54,48 49,36 46,32 C44,40 42,43 40,43 C38,43 36,40 34,32 Z",
+        O: "M28,32 C22,38 16,56 18,72 C20,86 26,94 30,98 C25,106 22,118 26,130 L32,130 L35,98 C37,96 39,95 40,95 C41,95 43,96 45,98 L48,130 L54,130 C58,118 55,106 50,98 C54,94 60,86 62,72 C64,56 58,38 52,32 C50,40 46,44 40,44 C34,44 30,40 28,32 Z"
+    };
+    return paths[shapeKey] || paths.X;
+}
+
+function shapeSvg(shapeKey, size, fillColor, scale){
+    const bodyPath = bodyShapePath(shapeKey);
+    const s = size || 80;
+    const h = Math.round(s * 1.75);
+    const fill = fillColor || "#2F6B4F";
+    const sc = scale || 1;
+    const scAttr = sc!==1?` transform="translate(40,150) scale(${sc}) translate(-40,-150)"`:"";
+    return `<svg width="${s}" height="${h}" viewBox="0 0 80 150" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="40" cy="18" r="11" fill="${fill}"${scAttr}/>
+  <path d="${bodyPath}" fill="${fill}"${scAttr}/>
+</svg>`;
+}
+
+// ===================== BMI & 健康评估 =====================
+function calcBMI(weight, heightCm){
+    const h = heightCm/100;
+    return +(weight/(h*h)).toFixed(1);
+}
+
+function getBMIInfo(bmi){
+    if(bmi<18.5) return {level:"偏瘦",label:"thin",color:"#5dade2",risk:["免疫力下降","贫血风险","骨质疏松","月经不调(女)"],action:"建议适当增加营养摄入，增加力量训练增肌"};
+    if(bmi<24) return {level:"正常",label:"good",color:"#27ae60",risk:[],action:"身材标准，继续保持健康饮食和规律运动"};
+    if(bmi<28) return {level:"超重",label:"warning",color:"#f39c12",risk:["脂肪肝风险","血脂异常","高血压前期","关节负担加重"],action:"建议控制饮食热量，每周3-5次有氧运动，每次40分钟"};
+    if(bmi<32) return {level:"肥胖",label:"danger",color:"#e67e22",risk:["高血压","高血脂","2型糖尿病","睡眠呼吸暂停","心血管疾病风险"],action:"必须控制饮食！每日热量缺口500kcal，每周运动5次以上"};
+    return {level:"重度肥胖",label:"danger",color:"#c0392b",risk:["高血压","糖尿病","冠心病","脑卒中风险","关节严重损伤","脂肪肝","多种癌症风险"],action:"强烈建议就医，在专业指导下进行减重，严格控制饮食"};
+}
+
+// ===================== 个性化营养推荐 =====================
+// 基于年龄、性别、体重、身高、活动水平计算TDEE和目标热量
+// targetMode: lose(减脂) / shape(塑形增肌,BMI正常) / gain(增重,BMI偏瘦)
+function calcNutrition(weight, heightCm, age, sex, targetMode){
+    const bmr = sex==="男"
+        ? Math.round(10*weight + 6.25*heightCm - 5*age + 5)
+        : Math.round(10*weight + 6.25*heightCm - 5*age - 161);
+    // 轻度活动系数1.375，运动日1.55
+    const activityFactor = targetMode==="shape"?1.55:1.375;
+    const tdee = Math.round(bmr * activityFactor);
+    let targetCal, proteinG, fatG, carbG, mode, water, steps, sleep, tips;
+
+    if(targetMode==="lose"){
+        // 安全减脂：热量缺口300-500kcal，不低于基础代谢
+        targetCal = Math.max(bmr, tdee - 500);
+        proteinG = Math.round(weight * 2.0);  // 高蛋白保护肌肉
+        fatG = Math.round(targetCal * 0.25 / 9);
+        carbG = Math.round((targetCal - proteinG*4 - fatG*9) / 4);
+        mode="lose";
+        water= sex==="男"?2800:2300;
+        steps=12000;
+        tips="高蛋白中低碳水，少油少盐，大量蔬菜，有氧+力量训练";
+    }else if(targetMode==="gain"){
+        // 增重：热量盈余300kcal，高蛋白高碳水
+        targetCal = tdee + 400;
+        proteinG = Math.round(weight * 1.8);
+        fatG = Math.round(targetCal * 0.25 / 9);
+        carbG = Math.round((targetCal - proteinG*4 - fatG*9) / 4);
+        mode="gain";
+        water= sex==="男"?2800:2300;
+        steps=7000;
+        tips="增加优质蛋白和碳水摄入，配合力量训练增肌";
+    }else{
+        // shape 塑形增肌：BMI正常，目标是增肌减脂塑形
+        targetCal = tdee + 200;  // 微盈余支持增肌
+        proteinG = Math.round(weight * 1.8);  // 高蛋白
+        fatG = Math.round(targetCal * 0.25 / 9);
+        carbG = Math.round((targetCal - proteinG*4 - fatG*9) / 4);
+        mode="shape";
+        water= sex==="男"?2500:2100;
+        steps=10000;
+        tips="均衡营养高蛋白，重点力量训练雕刻线条，适量有氧";
+    }
+    sleep= age<30?8:7.5;
+    return {bmr, tdee, targetCal, proteinG, fatG, carbG, mode, water, steps, sleep, tips};
+}
+
+// ===================== 三餐推荐库（健康营养版）=====================
+// 每餐包含：名称、描述、蛋白质/碳水/脂肪/基础热量
+// 减脂餐(较低热量，高蛋白)、塑形餐(均衡高蛋白)、增肌餐(高碳高蛋白)
+const MEAL_POOL = {
+    breakfast:{
+        lose:[
+            {name:"水煮蛋+全麦面包+牛奶",desc:"鸡蛋2个+全麦面包1片+低脂牛奶250ml+小番茄",protein:28,carb:40,fat:12,baseCal:360},
+            {name:"燕麦蓝莓希腊酸奶碗",desc:"燕麦40g+蓝莓+希腊酸奶150g+奇亚籽5g",protein:24,carb:42,fat:8,baseCal:330},
+            {name:"紫薯豆浆+鸡蛋",desc:"紫薯120g+无糖豆浆300ml+水煮蛋2个",protein:24,carb:42,fat:8,baseCal:320},
+            {name:"蔬菜鸡蛋卷",desc:"鸡蛋2个+菠菜番茄卷+半片全麦面包",protein:22,carb:25,fat:12,baseCal:300}
+        ],
+        shape:[
+            {name:"鸡蛋牛油果吐司",desc:"全麦面包2片+水煮蛋2个+牛油果1/4个+黑胡椒",protein:28,carb:42,fat:20,baseCal:430},
+            {name:"燕麦坚果水果碗",desc:"燕麦50g+蓝莓香蕉+希腊酸奶150g+坚果碎10g",protein:25,carb:55,fat:12,baseCal:410},
+            {name:"全麦三明治+牛奶",desc:"全麦面包+鸡蛋2个+生菜番茄+低脂牛奶250ml",protein:30,carb:48,fat:14,baseCal:430},
+            {name:"杂粮粥+肉包+鸡蛋",desc:"杂粮粥+瘦肉包1个+水煮蛋1个+小份凉拌菜",protein:22,carb:55,fat:10,baseCal:400}
+        ],
+        gain:[
+            {name:"增肌燕麦碗",desc:"燕麦70g+全脂牛奶300ml+香蕉1根+花生酱10g+蛋白粉",protein:40,carb:80,fat:15,baseCal:580},
+            {name:"鸡蛋煎饼+牛奶",desc:"鸡蛋3个+面粉+牛奶+香蕉1根+坚果15g",protein:32,carb:70,fat:18,baseCal:560},
+            {name:"牛肉三明治",desc:"全麦面包3片+酱牛肉80g+鸡蛋2个+牛油果+奶酪",protein:42,carb:60,fat:22,baseCal:590},
+            {name:"紫薯鸡蛋增肌餐",desc:"紫薯200g+鸡蛋3个+全脂牛奶300ml+坚果20g",protein:35,carb:75,fat:20,baseCal:590}
+        ]
+    },
+    lunch:{
+        lose:[
+            {name:"鸡胸肉糙米饭",desc:"煎鸡胸肉150g+糙米饭80g+西兰花250g+橄榄油5g",protein:45,carb:45,fat:10,baseCal:440},
+            {name:"清蒸鲈鱼+杂粮饭",desc:"鲈鱼180g+杂粮饭80g+炒时蔬250g+豆腐汤",protein:48,carb:42,fat:10,baseCal:440},
+            {name:"瘦牛肉西兰花",desc:"牛里脊130g+西兰花250g+糙米饭70g+少油烹饪",protein:42,carb:40,fat:12,baseCal:430},
+            {name:"虾仁蔬菜沙拉",desc:"虾仁150g+生菜+鸡蛋+藜麦50g+油醋汁",protein:38,carb:35,fat:12,baseCal:400}
+        ],
+        shape:[
+            {name:"鸡腿肉藜麦饭",desc:"去皮鸡腿肉150g+藜麦饭100g+混合蔬菜+少油",protein:42,carb:55,fat:15,baseCal:510},
+            {name:"番茄牛肉意面",desc:"瘦牛肉120g+全麦意面80g+番茄酱+西兰花",protein:40,carb:60,fat:12,baseCal:490},
+            {name:"三文鱼糙米饭",desc:"三文鱼120g+糙米饭100g+芦笋+少量牛油果",protein:38,carb:50,fat:18,baseCal:500},
+            {name:"鸡胸肉蔬菜卷饼",desc:"鸡胸肉150g+全麦卷饼+黑豆+彩椒+酸奶酱",protein:40,carb:55,fat:12,baseCal:480}
+        ],
+        gain:[
+            {name:"牛排杂粮饭",desc:"牛排200g+杂粮饭150g+西兰花+胡萝卜+橄榄油",protein:55,carb:80,fat:20,baseCal:700},
+            {name:"鸡腿排意面",desc:"去皮鸡腿排200g+意面120g+番茄酱+芝士粉+蔬菜",protein:50,carb:90,fat:18,baseCal:690},
+            {name:"鸡胸肉炒饭(大份)",desc:"鸡胸肉180g+糙米饭200g+鸡蛋2个+混合蔬菜+少油",protein:55,carb:100,fat:15,baseCal:720},
+            {name:"三文鱼牛油果饭",desc:"三文鱼150g+米饭180g+牛油果半个+蔬菜+味噌汤",protein:45,carb:85,fat:25,baseCal:720}
+        ]
+    },
+    dinner:{
+        lose:[
+            {name:"清蒸鸡胸+蔬菜",desc:"鸡胸肉120g+凉拌黄瓜木耳+蒸南瓜80g",protein:35,carb:15,fat:8,baseCal:280},
+            {name:"菌菇豆腐蔬菜煲",desc:"嫩豆腐+菌菇+青菜+魔芋丝+鸡胸肉80g",protein:30,carb:15,fat:8,baseCal:260},
+            {name:"虾仁蒸蛋+蔬菜",desc:"虾仁100g+鸡蛋2个蒸蛋+白灼菜心250g",protein:32,carb:10,fat:10,baseCal:270},
+            {name:"三文鱼芦笋(小份)",desc:"三文鱼80g+芦笋250g+小份红薯60g",protein:28,carb:20,fat:12,baseCal:310}
+        ],
+        shape:[
+            {name:"烤鸡胸+红薯+蔬菜",desc:"鸡胸肉150g+红薯120g+烤蔬菜250g",protein:40,carb:30,fat:10,baseCal:370},
+            {name:"牛肉蔬菜汤+杂粮饭",desc:"瘦牛肉120g+番茄卷心菜+杂粮饭80g",protein:35,carb:35,fat:10,baseCal:370},
+            {name:"龙利鱼豆腐煲",desc:"龙利鱼150g+嫩豆腐+菌菇+蔬菜+少量粉丝",protein:38,carb:25,fat:10,baseCal:350},
+            {name:"鸡丝荞麦面",desc:"鸡胸肉丝120g+荞麦面70g+黄瓜丝+凉拌汁",protein:35,carb:45,fat:8,baseCal:390}
+        ],
+        gain:[
+            {name:"牛肉土豆泥+蔬菜",desc:"瘦牛肉150g+土豆泥200g+西兰花+肉汁",protein:42,carb:60,fat:15,baseCal:530},
+            {name:"三文鱼意面",desc:"三文鱼150g+全麦意面100g+奶油蘑菇酱+蔬菜",protein:42,carb:70,fat:20,baseCal:600},
+            {name:"鸡腿肉烩饭",desc:"鸡腿肉150g+米饭150g+蘑菇+洋葱+芝士+蔬菜",protein:40,carb:85,fat:16,baseCal:620},
+            {name:"鸡蛋虾仁炒饭",desc:"虾仁120g+鸡蛋2个+米饭180g+蔬菜+少油烹饪",protein:38,carb:80,fat:14,baseCal:580}
+        ]
+    },
+    snack:[
+        {name:"一小把坚果",desc:"杏仁/核桃15g",protein:3,carb:3,fat:8,baseCal:90},
+        {name:"苹果一个",desc:"中等大小苹果约200g",protein:0,carb:25,fat:0,baseCal:95},
+        {name:"希腊酸奶",desc:"无糖希腊酸奶150g",protein:15,carb:6,fat:0,baseCal:90},
+        {name:"蛋白棒",desc:"低糖蛋白棒1根",protein:20,carb:18,fat:5,baseCal:190},
+        {name:"蛋白粉+香蕉",desc:"乳清蛋白粉30g+香蕉1根",protein:24,carb:27,fat:2,baseCal:220},
+        {name:"水煮蛋2个",desc:"鸡蛋2个",protein:12,carb:1,fat:10,baseCal:140}
+    ]
+};
+
+// 根据目标热量和模式选择三餐
+function getMealPlan(nutrition, seed){
+    const bfCal = Math.round(nutrition.targetCal * 0.30);
+    const lcCal = Math.round(nutrition.targetCal * 0.40);
+    const dnCal = Math.round(nutrition.targetCal * 0.30);
+
+    // 根据模式选择对应的餐食池
+    const pool = MEAL_POOL;
+    const mode = nutrition.mode; // lose/shape/gain
+
+    // 按seed直接选（而非总是选最接近的），让"换一批"真正换
+    function pickRotating(list, target, offset){
+        // 按与目标热量的差距排序
+        const sorted = [...list].map((item,i)=>({item,i,score:Math.abs(item.baseCal-target)}))
+            .sort((a,b)=>a.score-b.score);
+        // 取前4个最接近的作为候选池，按seed轮换选择
+        const poolSize = Math.min(4, sorted.length);
+        const idx = Math.abs(seed+offset) % poolSize;
+        return sorted[idx].item;
+    }
+
+    const bf = pickRotating(pool.breakfast[mode], bfCal, 0);
+    const lc = pickRotating(pool.lunch[mode], lcCal, 2);
+    const dn = pickRotating(pool.dinner[mode], dnCal, 4);
+
+    return {
+        bf:{...bf, cal:Math.max(bfCal-30, Math.min(bfCal+30, bf.baseCal))},
+        lc:{...lc, cal:Math.max(lcCal-30, Math.min(lcCal+30, lc.baseCal))},
+        dn:{...dn, cal:Math.max(dnCal-30, Math.min(dnCal+30, dn.baseCal))}
+    };
+}
+
+// ===================== 基础配置 =====================
+const STORAGE_KEY = "weight-v3";
+const STABLE_TARGET = 7;
+const SHAPE = {
+    S:{name:"S曲线",minBmi:19.5,maxBmi:21,desc:"肩窄胯宽，腰肢纤细，曲线优美"},
+    X:{name:"X沙漏",minBmi:20,maxBmi:22.5,desc:"肩胯比例均衡，腰线分明，经典沙漏"},
+    H:{name:"H直筒",minBmi:21,maxBmi:23,desc:"肩腰胯宽度相近，线条匀称挺拔"},
+    A:{name:"A梨形",minBmi:20.5,maxBmi:23.2,desc:"上窄下宽，胯部略宽，温婉柔美"},
+    O:{name:"O圆润",minBmi:22,maxBmi:24,desc:"中段饱满，整体圆润，富态健康"}
+};
+const COLORS = ["#2F6B4F","#c26c38","#486da8"];
+
+// 常见食物卡路里数据库 (每100g/每份 kcal)
+const FOOD_DB = [
+    // 主食
+    {kw:["米饭","白饭"],kcal:116,unit:"1碗(150g)",unitKcal:174},
+    {kw:["糙米饭","糙米"],kcal:112,unit:"1碗(150g)",unitKcal:168},
+    {kw:["面条","拉面","汤面"],kcal:280,unit:"1碗",unitKcal:400},
+    {kw:["意大利面","意面","pasta"],kcal:131,unit:"1份",unitKcal:380},
+    {kw:["馒头"],kcal:223,unit:"1个(100g)",unitKcal:223},
+    {kw:["包子","肉包"],kcal:227,unit:"1个",unitKcal:200},
+    {kw:["饺子"],kcal:253,unit:"10个",unitKcal:380},
+    {kw:["面包","吐司"],kcal:313,unit:"1片",unitKcal:80},
+    {kw:["全麦面包"],kcal:250,unit:"1片",unitKcal:70},
+    {kw:["燕麦","燕麦片","麦片"],kcal:367,unit:"1碗(40g)",unitKcal:150},
+    {kw:["红薯","地瓜"],kcal:86,unit:"1个(200g)",unitKcal:172},
+    {kw:["玉米"],kcal:106,unit:"1根",unitKcal:120},
+    {kw:["粥","稀饭"],kcal:46,unit:"1碗",unitKcal:70},
+    // 蛋白质
+    {kw:["鸡胸肉","鸡胸脯"],kcal:133,unit:"1块(150g)",unitKcal:200},
+    {kw:["鸡腿","鸡腿肉"],kcal:181,unit:"1个",unitKcal:250},
+    {kw:["鸡翅"],kcal:194,unit:"2个",unitKcal:240},
+    {kw:["鸡蛋","水煮蛋","煮蛋"],kcal:144,unit:"1个",unitKcal:80},
+    {kw:["煎蛋","荷包蛋"],kcal:190,unit:"1个",unitKcal:110},
+    {kw:["牛肉","瘦牛肉"],kcal:125,unit:"1份(150g)",unitKcal:190},
+    {kw:["牛排"],kcal:250,unit:"1份(200g)",unitKcal:500},
+    {kw:["猪肉","瘦猪肉"],kcal:143,unit:"1份(100g)",unitKcal:143},
+    {kw:["五花肉","肥肉"],kcal:395,unit:"1份(100g)",unitKcal:395},
+    {kw:["鱼肉","鱼"],kcal:113,unit:"1份(150g)",unitKcal:170},
+    {kw:["三文鱼"],kcal:208,unit:"1份(150g)",unitKcal:312},
+    {kw:["虾","虾仁"],kcal:93,unit:"1份(100g)",unitKcal:93},
+    {kw:["豆腐"],kcal:81,unit:"1份(150g)",unitKcal:122},
+    {kw:["牛奶"],kcal:54,unit:"1杯(250ml)",unitKcal:135},
+    {kw:["酸奶"],kcal:72,unit:"1杯(200g)",unitKcal:144},
+    {kw:["希腊酸奶"],kcal:59,unit:"1杯(200g)",unitKcal:120},
+    // 蔬菜水果
+    {kw:["苹果"],kcal:52,unit:"1个",unitKcal:95},
+    {kw:["香蕉"],kcal:89,unit:"1根",unitKcal:105},
+    {kw:["橙子"],kcal:47,unit:"1个",unitKcal:70},
+    {kw:["葡萄"],kcal:67,unit:"1串",unitKcal:100},
+    {kw:["西瓜"],kcal:30,unit:"1块",unitKcal:80},
+    {kw:["番茄","西红柿"],kcal:18,unit:"1个",unitKcal:30},
+    {kw:["黄瓜"],kcal:16,unit:"1根",unitKcal:25},
+    {kw:["西兰花"],kcal:34,unit:"1份",unitKcal:50},
+    {kw:["生菜","沙拉菜"],kcal:15,unit:"1份",unitKcal:20},
+    {kw:["青菜","菠菜","白菜"],kcal:20,unit:"1份",unitKcal:40},
+    // 零食饮料
+    {kw:["可乐"],kcal:43,unit:"1罐(330ml)",unitKcal:142},
+    {kw:["奶茶"],kcal:80,unit:"1杯(500ml)",unitKcal:400},
+    {kw:["咖啡","美式"],kcal:2,unit:"1杯",unitKcal:5},
+    {kw:["拿铁"],kcal:60,unit:"1杯",unitKcal:180},
+    {kw:["薯片"],kcal:536,unit:"1包(70g)",unitKcal:375},
+    {kw:["巧克力"],kcal:546,unit:"1块(50g)",unitKcal:273},
+    {kw:["饼干"],kcal:480,unit:"3片",unitKcal:150},
+    {kw:["坚果","花生","杏仁"],kcal:600,unit:"1把(30g)",unitKcal:180},
+    {kw:["啤酒"],kcal:43,unit:"1瓶(500ml)",unitKcal:215},
+    {kw:["米饭","炒饭"],kcal:170,unit:"1份",unitKcal:500},
+    {kw:["炸鸡","鸡排"],kcal:290,unit:"1份",unitKcal:600},
+    {kw:["汉堡"],kcal:250,unit:"1个",unitKcal:500},
+    {kw:["披萨"],kcal:270,unit:"1块",unitKcal:300},
+    {kw:["沙拉","蔬菜沙拉"],kcal:80,unit:"1份",unitKcal:150},
+    {kw:["水煮菜","水煮"],kcal:30,unit:"1份",unitKcal:80},
+];
+
+// 运动MET代谢当量数据库 (基于ACSM运动代谢当量)
+// MET值 × 体重kg × 时间小时 = 消耗卡路里
+// 注意：具体词放在前面，通用词放后面，匹配时按最长关键词优先
+const EXERCISE_DB = [
+    {kw:["自由泳"],met:10,label:"自由泳"},
+    {kw:["蛙泳"],met:8,label:"蛙泳"},
+    {kw:["游泳"],met:8,label:"游泳"},
+    {kw:["快跑","冲刺"],met:12,label:"快跑"},
+    {kw:["慢跑"],met:7,label:"慢跑"},
+    {kw:["跑步","跑"],met:8.3,label:"跑步"},
+    {kw:["动感单车"],met:8.5,label:"动感单车"},
+    {kw:["骑车","骑行","自行车"],met:6.8,label:"骑行"},
+    {kw:["爬楼梯"],met:9,label:"爬楼梯"},
+    {kw:["登山","爬山","爬楼"],met:8,label:"登山"},
+    {kw:["快走"],met:4.5,label:"快走"},
+    {kw:["散步","慢走"],met:2.5,label:"散步"},
+    {kw:["走路","步行","走"],met:3.5,label:"走路"},
+    {kw:["跳绳"],met:12,label:"跳绳"},
+    {kw:["HIIT","高强度间歇"],met:10,label:"HIIT"},
+    {kw:["有氧操","跳操","健美操"],met:7.5,label:"有氧操"},
+    {kw:["普拉提"],met:3,label:"普拉提"},
+    {kw:["瑜伽"],met:2.5,label:"瑜伽"},
+    {kw:["力量训练","撸铁","举重","健身","器械"],met:5,label:"力量训练"},
+    {kw:["篮球"],met:8,label:"篮球"},
+    {kw:["足球"],met:10,label:"足球"},
+    {kw:["羽毛球"],met:5.5,label:"羽毛球"},
+    {kw:["网球"],met:7,label:"网球"},
+    {kw:["乒乓球"],met:4,label:"乒乓球"},
+    {kw:["排球"],met:4,label:"排球"},
+    {kw:["椭圆机"],met:5,label:"椭圆机"},
+    {kw:["划船机"],met:7,label:"划船机"},
+    {kw:["滑雪"],met:7,label:"滑雪"},
+    {kw:["跳舞","舞蹈"],met:5,label:"跳舞"},
+    {kw:["太极","太极拳"],met:3,label:"太极"},
+    {kw:["拉伸","柔韧"],met:2.3,label:"拉伸"},
+    {kw:["家务","打扫","清洁"],met:3.5,label:"家务"},
+    {kw:["站立"],met:1.5,label:"站立"},
+    {kw:["坐着","休息","办公"],met:1.3,label:"坐着休息"},
+    {kw:["睡觉","睡眠"],met:0.95,label:"睡觉"},
+];
+const initData = {
+    people:[
+        {id:"p1",name:"如",age:30,height:165,sex:"女",shape:"X",color:COLORS[0]},
+        {id:"p2",name:"东",age:30,height:175,sex:"男",shape:"H",color:COLORS[1]},
+        {id:"p3",name:"牛",age:30,height:175,sex:"女",shape:"X",color:COLORS[2]}
+    ],
+    records:{
+        p1:[
+            {d:"2026-07-07",w:62.5},{d:"2026-07-08",w:62.0},{d:"2026-07-09",w:61.8},
+            {d:"2026-07-10",w:61.5},{d:"2026-07-11",w:61.0},{d:"2026-07-12",w:60.8},
+            {d:"2026-07-13",w:60.5},{d:"2026-07-14",w:60.2},{d:"2026-07-15",w:61.0}
+        ],
+        p2:[
+            {d:"2026-07-07",w:87},{d:"2026-07-08",w:87},{d:"2026-07-09",w:87.8},
+            {d:"2026-07-10",w:88.2},{d:"2026-07-11",w:88.8},{d:"2026-07-12",w:86.8},
+            {d:"2026-07-13",w:87.3},{d:"2026-07-14",w:89.6}
+        ],
+        p3:[
+            {d:"2026-07-07",w:76.7},{d:"2026-07-08",w:76.4},{d:"2026-07-09",w:76},
+            {d:"2026-07-10",w:76.1},{d:"2026-07-11",w:76},{d:"2026-07-12",w:76},
+            {d:"2026-07-13",w:76.2},{d:"2026-07-14",w:76.8},{d:"2026-07-15",w:76.4}
+        ]
+    },
+    meals:{},
+    mealSeed:0
+};
+
+// ===================== 工具函数 =====================
+function today(){
+    const d=new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function escapeHtml(v){
+    return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+}
+function cloneData(d){return JSON.parse(JSON.stringify(d))}
+// 匹配食物卡路里（最长关键词优先）
+function matchFood(text){
+    if(!text)return null;
+    const t=text.toLowerCase();
+    let best=null,bestKwLen=0;
+    for(const f of FOOD_DB){
+        for(const kw of f.kw){
+            if(t.includes(kw.toLowerCase()) && kw.length>bestKwLen){
+                best={...f,matchedKw:kw};
+                bestKwLen=kw.length;
+            }
+        }
+    }
+    return best;
+}
+// 解析运动文字 "快跑30分钟" → {label, met, minutes, kcal}
+function parseExercise(text, weightKg){
+    if(!text)return null;
+    const t=text;
+    let best=null;
+    let bestKwLen=0;
+    // 找匹配的运动（优先匹配最长关键词，确保"慢跑">"跑"）
+    for(const ex of EXERCISE_DB){
+        for(const kw of ex.kw){
+            if(t.includes(kw) && kw.length>bestKwLen){
+                best={...ex,matchedKw:kw};
+                bestKwLen=kw.length;
+            }
+        }
+    }
+    // 解析时间：支持"30分""30分钟""半小时""1小时""1h""1h30分""1.5小时"
+    let minutes=0;
+    const halfHour=t.match(/半(小时|个小时|h)/);
+    if(halfHour)minutes=30;
+    else{
+        // X小时Y分钟
+        const hm=t.match(/(\d+(?:\.\d+)?)\s*(小时|h|时)/);
+        const mm=t.match(/(\d+)\s*(分钟|分|min)/);
+        if(hm)minutes+=parseFloat(hm[1])*60;
+        if(mm)minutes+=parseInt(mm[1]);
+        // 单独数字+单位缺失，默认分钟
+        if(!hm&&!mm){
+            const justNum=t.match(/^(\d+)$/);
+            if(justNum)minutes=parseInt(justNum[1]);
+        }
+    }
+    if(!best&&minutes>0){
+        best={label:"运动",met:4,matchedKw:""};
+    }
+    if(!best||minutes<=0)return null;
+    const kcal=Math.round(best.met*weightKg*(minutes/60));
+    return {label:best.label,met:best.met,minutes,kcal,matchedKw:best.matchedKw};
+}
+// 文件转base64
+function fileToDataUrl(file){
+    return new Promise(res=>{
+        const r=new FileReader();
+        r.onload=()=>res(r.result);
+        r.readAsDataURL(file);
+    });
+}
+function getWeightRange(height,shapeKey){
+    const h=Number(height)/100;
+    const s=SHAPE[shapeKey]||SHAPE.X;
+    return [Number((s.minBmi*h*h).toFixed(1)),Number((s.maxBmi*h*h).toFixed(1))];
+}
+function calcBMR(weight,height,age,sex){
+    if(sex==="男") return Math.round(10*weight+6.25*height-5*age+5);
+    return Math.round(10*weight+6.25*height-5*age-161);
+}
+function calcStable(list,minW,maxW){
+    let cnt=0;
+    const arr=[...list].sort((a,b)=>a.d.localeCompare(b.d));
+    for(let i=arr.length-1;i>=0;i--){
+        if(Number(arr[i].w)>=minW&&Number(arr[i].w)<=maxW) cnt++;
+        else break;
+    }
+    return cnt;
+}
+// 根据BMI判断当前最接近的身材类型
+function getCurrentShape(bmi){
+    if(bmi<18.5) return {key:"H",label:"偏瘦·H直筒",color:"#5dade2"};
+    if(bmi<20) return {key:"S",label:"S曲线型",color:"#27ae60"};
+    if(bmi<21) return {key:"X",label:"X沙漏型",color:"#27ae60"};
+    if(bmi<22.5) return {key:"A",label:"A梨型",color:"#27ae60"};
+    if(bmi<24) return {key:"H",label:"H直筒型",color:"#27ae60"};
+    if(bmi<26) return {key:"H",label:"偏丰满·H型",color:"#f39c12"};
+    if(bmi<28) return {key:"O",label:"O圆润型",color:"#e67e22"};
+    return {key:"O",label:"肥胖·O圆润",color:"#e74c3c"};
+}
+
+function daySeed(dateStr){
+    let h=0;
+    for(let i=0;i<dateStr.length;i++) h=((h<<5)-h)+dateStr.charCodeAt(i)|0;
+    return Math.abs(h);
+}
+
+// ===================== 健康进步指数 HPI (Health Progress Index) =====================
+// 参考: WHO BMI标准, ACSM运动测试与处方指南(第11版), 中国居民膳食指南2022
+// 满分100分，5个维度
+function calcHPI(person, recordsAll, todayStr){
+    const records = (recordsAll[person.id]||[]).slice().sort((a,b)=>a.d.localeCompare(b.d));
+    const w = person.height/100;
+    const [tMin,tMax] = getWeightRange(person.height, person.shape);
+    const tMid = (tMin+tMax)/2;
+    const last = records[records.length-1];
+    if(!last) return {total:0,bmi:0,dims:{bmi:0,target:0,trend:0,consistency:0,streak:0},grade:"--",trendText:"暂无数据"};
+
+    const curW = Number(last.w);
+    const bmi = calcBMI(curW, person.height);
+
+    // 维度1: BMI健康分 (30分) — WHO标准
+    let bmiScore = 0;
+    if(bmi>=18.5 && bmi<24) bmiScore=30;
+    else if(bmi>=24 && bmi<26) bmiScore=22;
+    else if(bmi>=26 && bmi<28) bmiScore=14;
+    else if(bmi>=28 && bmi<32) bmiScore=6;
+    else if(bmi>=32) bmiScore=0;
+    else if(bmi>=17 && bmi<18.5) bmiScore=20;
+    else if(bmi>=16 && bmi<17) bmiScore=10;
+    else bmiScore=4;
+
+    // 维度2: 目标达成分 (25分) — 距离目标的差距
+    let targetScore=0;
+    const inTarget = curW>=tMin && curW<=tMax;
+    if(inTarget){
+        targetScore=25;
+    }else{
+        let dist;
+        if(curW>tMax) dist=curW-tMax;
+        else dist=tMin-curW;
+        if(dist<1) targetScore=22;
+        else if(dist<2) targetScore=18;
+        else if(dist<3) targetScore=14;
+        else if(dist<5) targetScore=10;
+        else if(dist<8) targetScore=6;
+        else targetScore=2;
+    }
+
+    // 维度3: 趋势方向分 (20分) — 最近7天变化是否朝正确方向，速度是否健康(0.3-1kg/周)
+    let trendScore=10;
+    let trendText="";
+    const recent7 = records.filter(r=>{
+        const diff = Math.floor((new Date(todayStr)-new Date(r.d))/(86400000));
+        return diff>=0 && diff<=7;
+    });
+    if(recent7.length>=2){
+        const first = recent7[0];
+        const last7 = recent7[recent7.length-1];
+        const change = Number(last7.w) - Number(first.w);
+        const days = Math.max(1, Math.floor((new Date(last7.d)-new Date(first.d))/(86400000))+1);
+        const weeklyChange = change/days*7;
+
+        const needLose = curW > tMax;
+        const needGain = curW < tMin;
+        const onTarget = inTarget;
+
+        if(onTarget){
+            // 目标范围内：稳定最好
+            if(Math.abs(weeklyChange)<0.5) {trendScore=20;trendText="稳定保持";}
+            else if(Math.abs(weeklyChange)<1) {trendScore=14;trendText="小幅波动";}
+            else {trendScore=6;trendText="波动较大";}
+        }else if(needLose){
+            if(weeklyChange<=-0.3 && weeklyChange>=-1.2){trendScore=20;trendText="健康减脂中";}
+            else if(weeklyChange<-1.2){trendScore=12;trendText="减得太快";}
+            else if(weeklyChange<0){trendScore=14;trendText="缓慢下降";}
+            else if(weeklyChange<0.3){trendScore=8;trendText="平台期";}
+            else {trendScore=3;trendText="反弹中";}
+        }else if(needGain){
+            if(weeklyChange>=0.3 && weeklyChange<=1.2){trendScore=20;trendText="健康增重中";}
+            else if(weeklyChange>1.2){trendScore=10;trendText="增得太快";}
+            else if(weeklyChange>0){trendScore=14;trendText="缓慢上升";}
+            else {trendScore=3;trendText="还在下降";}
+        }
+    }else{
+        trendText="记录不足";
+    }
+
+    // 维度4: 坚持记录分 (15分) — 最近7天记录天数
+    let consScore=0;
+    const last7days = [];
+    for(let i=0;i<7;i++){
+        const d=new Date(todayStr);
+        d.setDate(d.getDate()-i);
+        const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+        last7days.push(ds);
+    }
+    let recDays=0;
+    last7days.forEach(ds=>{if(records.find(r=>r.d===ds))recDays++});
+    if(recDays>=7) consScore=15;
+    else if(recDays>=6) consScore=13;
+    else if(recDays>=5) consScore=11;
+    else if(recDays>=4) consScore=8;
+    else if(recDays>=3) consScore=5;
+    else if(recDays>=2) consScore=3;
+    else if(recDays>=1) consScore=1;
+    else consScore=0;
+
+    // 维度5: 连续达标分 (10分)
+    let streakScore=0;
+    const stable = calcStable(records,tMin,tMax);
+    if(stable>=7) streakScore=10;
+    else if(stable>=5) streakScore=8;
+    else if(stable>=3) streakScore=5;
+    else if(stable>=1) streakScore=2;
+    else streakScore=0;
+
+    const total = bmiScore+targetScore+trendScore+consScore+streakScore;
+    let grade;
+    if(total>=90) grade="S";
+    else if(total>=80) grade="A";
+    else if(total>=70) grade="B";
+    else if(total>=60) grade="C";
+    else if(total>=40) grade="D";
+    else grade="E";
+
+    return {
+        total, bmi, grade, trendText,
+        dims:{bmi:bmiScore,target:targetScore,trend:trendScore,consistency:consScore,streak:streakScore},
+        curW, inTarget, dist:inTarget?0:(curW>tMax?+(curW-tMax).toFixed(1):+(tMin-curW).toFixed(1)),
+        recDays, stable
+    };
+}
+
+// ===================== 存储 =====================
+function load(){
+    try{
+        const s=localStorage.getItem(STORAGE_KEY);
+        // 迁移旧版本数据
+        const old1=localStorage.getItem("weight-v2");
+        const old2=localStorage.getItem("weight-min");
+        if(s) return JSON.parse(s);
+        if(old1){try{const d=JSON.parse(old1);if(!d.meals)d.meals={};if(d.mealSeed==null)d.mealSeed=0;localStorage.setItem(STORAGE_KEY,JSON.stringify(d));localStorage.removeItem("weight-v2");return d}catch{}}
+        if(old2){try{const d=JSON.parse(old2);d.meals={};d.mealSeed=0;localStorage.setItem(STORAGE_KEY,JSON.stringify(d));localStorage.removeItem("weight-min");return d}catch{}}
+        return null;
+    }catch{return null}
+}
+function save(data){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(data))}catch{}}
+
+// ===================== 状态 =====================
+let state={
+    data:null,activeId:"p1",edit:false,draft:null,
+    inputDate:today(),inputWeight:"",
+    showHpiModal:false,
+    foodInput:"",foodCal:"",foodImg:null,
+    exInput:"",exResult:null,exImg:null,
+    loading:true
+};
+const app=document.getElementById("app");
+const toastBox=document.getElementById("toastBox");
+function showTip(text){
+    toastBox.innerHTML=`<div class="toast">${escapeHtml(text)}</div>`;
+    setTimeout(()=>toastBox.innerHTML="",2000);
+}
+
+// ===================== 体重趋势图 =====================
+function drawChart(canvasId,recordList,targetMin,targetMax,lineColor){
+    const canvas=document.getElementById(canvasId);
+    if(!canvas||recordList.length<2)return;
+    const ctx=canvas.getContext("2d");
+    const w=canvas.clientWidth||canvas.offsetWidth||600;
+    const h=240;
+    canvas.width=w;canvas.height=h;
+    ctx.clearRect(0,0,w,h);
+    const pad={left:40,right:20,top:20,bottom:30};
+    const weights=recordList.map(r=>Number(r.w)).filter(Number.isFinite);
+    let minY=Math.min(...weights,targetMin)-1;
+    let maxY=Math.max(...weights,targetMax)+1;
+    if(maxY===minY){maxY+=1;minY-=1}
+    const plotH=h-pad.top-pad.bottom,plotW=w-pad.left-pad.right;
+    const getY=v=>pad.top+plotH*(1-(v-minY)/(maxY-minY));
+
+    ctx.strokeStyle="#f0f0f0";ctx.lineWidth=1;
+    for(let i=0;i<=4;i++){
+        const y=pad.top+plotH/4*i;
+        ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(w-pad.right,y);ctx.stroke();
+    }
+    ctx.setLineDash([5,4]);ctx.strokeStyle="#365CAD";ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(pad.left,getY(targetMax));ctx.lineTo(w-pad.right,getY(targetMax));ctx.stroke();
+    ctx.beginPath();ctx.moveTo(pad.left,getY(targetMin));ctx.lineTo(w-pad.right,getY(targetMin));ctx.stroke();
+    ctx.setLineDash([]);
+
+    const stepX=plotW/(recordList.length-1);
+    ctx.fillStyle=lineColor+"18";
+    ctx.beginPath();
+    recordList.forEach((r,i)=>{
+        const x=pad.left+i*stepX,y=getY(Number(r.w));
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.lineTo(pad.left+plotW,pad.top+plotH);
+    ctx.lineTo(pad.left,pad.top+plotH);
+    ctx.closePath();ctx.fill();
+
+    ctx.strokeStyle=lineColor;ctx.lineWidth=2.5;ctx.beginPath();
+    recordList.forEach((r,i)=>{
+        const x=pad.left+i*stepX,y=getY(Number(r.w));
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    ctx.fillStyle=lineColor;
+    recordList.forEach((r,i)=>{
+        const x=pad.left+i*stepX,y=getY(Number(r.w));
+        ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();
+    });
+}
+
+// ===================== 身材选择器HTML =====================
+function shapePickerHtml(currentKey,fnName){
+    let h='<div class="shape-picker">';
+    Object.entries(SHAPE).forEach(([k,v])=>{
+        const sel=k===currentKey?"selected":"";
+        const fill=k===currentKey?"#2F6B4F":"#b0c9bb";
+        h+=`<div class="shape-card ${sel}" onclick="${fnName}('${k}')">
+            ${shapeSvg(k,44,fill)}
+            <span class="shape-name">${v.name}</span>
+            <span class="shape-bmi">BMI ${v.minBmi}-${v.maxBmi}</span>
+        </div>`;
+    });
+    return h+'</div>';
+}
+
+// ===================== 饮食数据 =====================
+function getMealKey(pid,date){return `${date}_${pid}`}
+function getMeals(pid,date){
+    return state.data.meals[getMealKey(pid,date)]||{breakfast:0,lunch:0,dinner:0,snack:0,exercise:0};
+}
+function setMeals(pid,date,meals){
+    state.data.meals[getMealKey(pid,date)]=meals;
+    save(state.data);
+}
+
+// ===================== 渲染 =====================
+function render(){
+    if(state.loading){
+        app.innerHTML="<div style='padding:80px;text-align:center;color:#999'>加载中...</div>";
+        return;
+    }
+    const d=state.data;
+    const active=d.people.find(p=>p.id===state.activeId);
+    let html="";
+
+    html+=`<div class="ctrl-row" style="margin-bottom:10px">`;
+    d.people.forEach(p=>{
+        const cls=p.id===state.activeId?"tab active":"tab";
+        html+=`<button class="${cls}" onclick="switchUser('${escapeHtml(p.id)}')">${escapeHtml(p.name)}</button>`;
+    });
+    if(active){
+        html+=`<button class="tab btn-gray" onclick="editUser('${escapeHtml(active.id)}')" style="margin-left:auto">编辑基本信息</button>`;
+    }
+    html+=`</div>`;
+
+    if(!active){
+        html+=`<div class="card"><p>暂无成员，请先新增。</p></div>`;
+        app.innerHTML=html;return;
+    }
+
+    // 编辑面板（放在顶部，点击编辑后立刻可见）
+    if(state.edit){
+        const ds=state.draft.shape||"X";
+        html+=`<div class="card" style="border:2px solid #2F6B4F44">
+        <h2>${state.draft.id?"编辑基本信息":"新增"}成员</h2>
+        <div class="form-item"><span class="label">姓名</span><input value="${escapeHtml(state.draft.name)}" oninput="draftSet('name',this.value)"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div class="form-item" style="flex:1;min-width:80px"><span class="label">年龄</span><input type="number" min="1" value="${escapeHtml(state.draft.age)}" oninput="draftSet('age',this.value)"></div>
+            <div class="form-item" style="flex:1;min-width:80px"><span class="label">身高cm</span><input type="number" min="50" value="${escapeHtml(state.draft.height)}" oninput="draftSet('height',this.value)"></div>
+            <div class="form-item" style="flex:1;min-width:80px">
+                <span class="label">性别</span>
+                <select onchange="draftSet('sex',this.value)">
+                    <option value="女" ${state.draft.sex==="女"?"selected":""}>女</option>
+                    <option value="男" ${state.draft.sex==="男"?"selected":""}>男</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-item">
+            <span class="label">理想身材（点击图片选择）</span>
+            ${shapePickerHtml(ds,"pickShape")}
+        </div>
+        <div class="ctrl-row" style="margin-bottom:0">
+            <button class="btn-main" onclick="saveDraft()">保存</button>
+            <button class="btn-gray" onclick="closeEdit()">取消</button>
+            ${state.draft.id?`<button style="color:#d03333" onclick="delUser('${escapeHtml(state.draft.id)}')">删除成员</button>`:""}
+        </div>
+        </div>`;
+    }
+
+    const records=(d.records[active.id]||[]).sort((a,b)=>a.d.localeCompare(b.d));
+    const [tMin,tMax]=getWeightRange(active.height,active.shape);
+    const tMid=(tMin+tMax)/2;
+    const stableDays=records.length?calcStable(records,tMin,tMax):0;
+    const shapeInfo=SHAPE[active.shape]||SHAPE.X;
+    const todayRec=records.find(r=>r.d===state.inputDate);
+    const lastRec=records[records.length-1];
+    const currentW=todayRec?Number(todayRec.w):(lastRec?Number(lastRec.w):null);
+    const firstW=records.length?Number(records[0].w):null;
+    const dateStr=state.inputDate;
+    const isToday=dateStr===today();
+
+    // ====== BMI & 健康评估 ======
+    let bmiInfo=null, nutrition=null, curShape=null;
+    let coverClass="", coverDiff="", coverTitle="";
+    let progressPct=0, toGo=0, lost=0;
+    let currentShapeLabel = "";
+
+    if(currentW!=null){
+        const bmi=calcBMI(currentW,active.height);
+        bmiInfo=getBMIInfo(bmi);
+        curShape=getCurrentShape(bmi);
+
+        // 根据BMI判断模式：<18.5增重 18.5-24塑形增肌 >=24减脂
+        let nutMode;
+        if(bmi<18.5) nutMode="gain";
+        else if(bmi>=24) nutMode="lose";
+        else nutMode="shape";
+        nutrition = calcNutrition(currentW,active.height,active.age,active.sex,nutMode);
+
+        // 当前身材标签（显示具体身材类型而非超重/肥胖）
+        currentShapeLabel=curShape.label;
+        if(bmi>=28){coverClass="danger";coverTitle="⚠️ 健康警告"}
+        else if(bmi>=24){coverClass="warning";coverTitle="⚡ 需要减脂"}
+        else if(bmi<18.5){coverClass="warning";coverTitle="💡 需要增重"}
+        else{coverClass="";coverTitle="✓ 身材标准"}
+
+        if(currentW>tMax){
+            toGo=+(currentW-tMax).toFixed(1);
+            if(bmi>=28){
+                coverDiff=`<b>体重超标严重！</b>距离目标 ${toGo}kg，健康已亮红灯`;
+            }else if(bmi>=24){
+                coverDiff=`<b>超重了！</b>距离目标 ${toGo}kg，再不控制就晚了`;
+            }else{
+                coverDiff=`<b>距离理想${shapeInfo.name}还差 ${toGo}kg</b>，坚持一下就到了！`;
+            }
+            if(firstW!=null&&firstW>tMax){
+                const total=firstW-tMax;
+                const done=firstW-currentW;
+                progressPct=Math.max(0,Math.min(100,(done/total)*100));
+                lost=+(firstW-currentW).toFixed(1);
+            }
+        }else if(currentW<tMin){
+            toGo=+(tMin-currentW).toFixed(1);
+            coverDiff=`<b>偏瘦 ${toGo}kg</b>，需要增加营养和肌肉`;
+            progressPct=50;
+        }else{
+            coverDiff=`<b>完美！你已是${shapeInfo.name}身材</b>`;
+            progressPct=100;
+        }
+    }
+
+    // ====== 封面大字 ======
+    html+=`<div class="cover ${coverClass}">
+        <div class="cover-top">
+            <div class="cover-weight">
+                <div class="cover-date">${isToday?"今天":dateStr} · ${coverTitle}</div>
+                <div class="cover-num">${currentW!=null?currentW:"--"}<span class="cover-unit">kg</span></div>
+                <div class="cover-diff">${coverDiff||"暂无记录，开始记录吧"}</div>
+            </div>
+            <div class="cover-shape">
+                ${shapeSvg(active.shape,64,"#fff")}
+                <span class="cover-shape-label">${tMin}-${tMax}kg</span>
+            </div>
+        </div>
+        ${currentW!=null?`
+        <div class="cover-stats">
+            <div class="cover-stat">
+                <div class="cover-stat-val">${curShape.label.split("·").pop()}</div>
+                <div class="cover-stat-label">BMI ${calcBMI(currentW,active.height)}</div>
+            </div>
+            <div class="cover-stat">
+                <div class="cover-stat-val">${stableDays}/${STABLE_TARGET}</div>
+                <div class="cover-stat-label">连续达标</div>
+            </div>
+            <div class="cover-stat">
+                <div class="cover-stat-val">${lost>0?"-"+lost:"0"}</div>
+                <div class="cover-stat-label">已减 kg</div>
+            </div>
+        </div>
+        <div class="cover-progress">
+            <div class="cover-bar"><div class="cover-bar-fill" style="width:${progressPct}%"></div></div>
+            <div class="cover-bar-text">${progressPct>=100?"已达标":`进度 ${progressPct.toFixed(0)}%`}</div>
+        </div>
+        `:""}
+    </div>`;
+
+    // ====== 录入体重（紧跟封面）======
+    html+=`<div class="card" style="padding:14px 18px">
+        <div class="ctrl-row" style="margin-bottom:0">
+            <input type="date" value="${escapeHtml(state.inputDate)}" oninput="formDate(this.value)" style="flex:1;min-width:130px">
+            <input type="number" step="0.1" placeholder="输入体重 kg" value="${escapeHtml(state.inputWeight)}" oninput="formW(this.value)" onkeydown="if(event.key==='Enter')saveRec()" style="flex:1;min-width:100px">
+            <button class="btn-main" onclick="saveRec()">记录</button>
+        </div>
+    </div>`;
+
+    // ====== 健康评估警示卡片（移到排名榜前面）======
+    if(bmiInfo){
+        const bmi=calcBMI(currentW,active.height);
+        const isNormal = bmi>=18.5 && bmi<24;
+        const alertClass = bmiInfo.label==="danger"?"danger":bmiInfo.label==="warning"?"warning":"good";
+        const icon = bmiInfo.label==="danger"?"🚨":bmiInfo.label==="warning"?"⚠️":"✅";
+
+        if(isNormal){
+            html+=`<div class="health-alert good">
+                <div class="health-icon">💪</div>
+                <div class="health-content">
+                    <div class="health-title">你的体型：${curShape.label} · 塑形增肌阶段</div>
+                    <div class="health-bmi">身高${active.height}cm · 体重${currentW}kg · ${active.age}岁${active.sex} · 目标${shapeInfo.name}</div>
+                    <div class="health-desc">体重已在健康范围内，接下来重点是<b>雕刻身体线条</b>，通过力量训练增肌减脂塑形</div>
+                    <div class="health-action">✨ 建议：每周4次力量训练（分化训练胸/背/腿/肩臂）+2-3次有氧，蛋白质每日${nutrition?nutrition.proteinG:"--"}g均匀分配到三餐</div>
+                </div>
+            </div>`;
+        }else{
+            html+=`<div class="health-alert ${alertClass}">
+                <div class="health-icon">${icon}</div>
+                <div class="health-content">
+                    <div class="health-title">你现在是：${curShape.label} (BMI ${bmi})</div>
+                    <div class="health-bmi">身高${active.height}cm · 体重${currentW}kg · ${active.age}岁${active.sex}</div>
+                    ${bmiInfo.risk.length>0?`
+                        <div class="health-desc"><b>健康风险警示：</b></div>
+                        <div class="health-risks">
+                            ${bmiInfo.risk.map(r=>`<span class="risk-tag">${r}</span>`).join("")}
+                        </div>
+                    `:`<div class="health-desc">你的体重在健康范围内，各项指标良好，继续保持！</div>`}
+                    <div class="health-action">💪 ${bmiInfo.action}</div>
+                </div>
+            </div>`;
+        }
+
+        // BMI标尺
+        const bmiPct = Math.max(0,Math.min(100,((bmi-15)/(35-15))*100));
+        html+=`<div class="card" style="padding-top:14px;padding-bottom:14px">
+            <h2 style="margin-bottom:8px">BMI 参考</h2>
+            <div class="bmi-scale">
+                <div class="bmi-bar">
+                    <div class="bmi-pointer" style="left:${bmiPct}%"></div>
+                </div>
+                <div class="bmi-labels">
+                    <span class="${bmi<18.5?'active':''}">偏瘦<br><18.5</span>
+                    <span class="${bmi>=18.5&&bmi<24?'active':''}">正常<br>18.5-24</span>
+                    <span class="${bmi>=24&&bmi<28?'active':''}">超重<br>24-28</span>
+                    <span class="${bmi>=28?'active':''}">肥胖<br>≥28</span>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // ====== HPI 健康进步指数排名 ======
+    const rankings = d.people.map(p=>{
+        const hpi = calcHPI(p, d.records, isToday?today():dateStr);
+        const prs = hpi.bmi?getCurrentShape(hpi.bmi):{label:"--",color:"#ccc"};
+        return {person:p, hpi, curShape:prs};
+    }).sort((a,b)=>b.hpi.total-a.hpi.total);
+
+    html+=`<div class="card ranking-card">
+        <div class="ranking-title">
+            <h2>健康进步榜</h2>
+            <span class="hpi-source-link" onclick="openHpiModal()">HPI指数 · WHO+ACSM标准 ⓘ</span>
+        </div>
+        <div class="rank-list">`;
+    rankings.forEach((r,i)=>{
+        const rank=i+1;
+        const isActive=r.person.id===state.activeId;
+        const h=r.hpi;
+        const medal = rank===1?"🥇":rank===2?"🥈":rank===3?"🥉":rank;
+        const rankCls = `rank-${rank<=3?rank:'other'}`;
+        let avScale=1;
+        if(h.curW){
+            const [pMin,pMax]=getWeightRange(r.person.height,r.person.shape);
+            const pMid=(pMin+pMax)/2;
+            if(h.curW>pMax){
+                avScale=1+((h.curW-pMid)/pMid)*0.8;
+            }else if(h.curW<pMin){
+                avScale=1-((pMid-h.curW)/pMid)*0.6;
+            }
+            avScale=Math.max(0.8,Math.min(1.25,avScale));
+        }
+        html+=`<div class="rank-item ${rankCls} ${isActive?'active':''}" onclick="switchUser('${escapeHtml(r.person.id)}')">
+            <div class="rank-medal">${medal}</div>
+            <div class="rank-avatar">
+                ${shapeSvg(r.person.shape,30,r.person.color,avScale)}
+            </div>
+            <div class="rank-info">
+                <div class="rank-name-row">
+                    <span class="rank-name">${escapeHtml(r.person.name)}</span>
+                    <span class="rank-grade grade-${h.grade}">${h.grade}</span>
+                </div>
+                <div class="rank-status">
+                    ${h.curW?`${h.curW}kg · ${r.curShape.label} · `:""}${h.trendText}
+                    ${h.inTarget?" · ✓ 达标":h.dist?` · 距目标${h.dist}kg`:""}
+                </div>
+                <div class="rank-bar"><div class="rank-bar-fill" style="width:${h.total}%"></div></div>
+                <div class="rank-dims">
+                    <span class="rank-dim">BMI${h.dims.bmi}/30</span>
+                    <span class="rank-dim">目标${h.dims.target}/25</span>
+                    <span class="rank-dim">趋势${h.dims.trend}/20</span>
+                    <span class="rank-dim">坚持${h.dims.consistency}/15</span>
+                    <span class="rank-dim">连续${h.dims.streak}/10</span>
+                </div>
+            </div>
+            <div class="rank-score">
+                <div class="rank-score-num">${h.total}</div>
+                <div class="rank-score-label">/100分</div>
+            </div>
+        </div>`;
+    });
+    html+=`</div>
+        <div style="margin-top:10px;font-size:11px;color:#aaa;line-height:1.5">
+            评分依据：BMI健康(30)+目标达成(25)+趋势方向(20)+记录坚持(15)+连续达标(10)。S≥90, A≥80, B≥70, C≥60, D≥40
+        </div>
+    </div>`;
+
+    // HPI依据弹窗
+    if(state.showHpiModal){
+        html+=`<div class="modal-overlay" onclick="closeHpiModal()">
+            <div class="modal-box" onclick="event.stopPropagation()">
+                <div class="modal-hdr">
+                    <h3>HPI 健康进步指数 · 评分依据</h3>
+                    <button class="modal-close" onclick="closeHpiModal()">×</button>
+                </div>
+                <div class="modal-section">
+                    <h4>📐 BMI健康分（30分）— 参考WHO标准</h4>
+                    <p>依据世界卫生组织(WHO)《Global Health Observatory》BMI分类标准：</p>
+                    <ul>
+                        <li>BMI 18.5-23.9（正常）→ 30分满分</li>
+                        <li>BMI 24-25.9（超重前期）→ 22分</li>
+                        <li>BMI 26-27.9（超重）→ 14分</li>
+                        <li>BMI 28-31.9（肥胖）→ 6分</li>
+                        <li>BMI ≥32（重度肥胖）→ 0分</li>
+                        <li>偏瘦(BMI<18.5)相应扣分</li>
+                    </ul>
+                    <div class="modal-cite">来源：WHO Obesity and Overweight Fact Sheet (2024)</div>
+                </div>
+                <div class="modal-section">
+                    <h4>🎯 目标达成分（25分）— 基于理想身材区间</h4>
+                    <p>根据用户选择的理想身材类型（S/X/H/A/O曲线），计算出对应BMI区间下的体重范围，距离目标越近得分越高：</p>
+                    <ul>
+                        <li>体重落在理想区间内 → 25分满分</li>
+                        <li>距离目标<1kg → 22分</li>
+                        <li>距离目标<2kg → 18分</li>
+                        <li>距离目标<3kg → 14分</li>
+                        <li>距离目标<5kg → 10分</li>
+                    </ul>
+                </div>
+                <div class="modal-section">
+                    <h4>📈 趋势方向分（20分）— ACSM运动医学指南</h4>
+                    <p>依据美国运动医学会(ACSM)《ACSM's Guidelines for Exercise Testing and Prescription》第11版推荐的安全减重/增重速度：</p>
+                    <ul>
+                        <li>健康速度0.3-1.2kg/周 → 20分满分</li>
+                        <li>速度过快(>1.2kg/周)有健康风险 → 10-12分</li>
+                        <li>方向正确但缓慢 → 14分</li>
+                        <li>平台期 → 8分</li>
+                        <li>方向错误（反弹）→ 3分</li>
+                        <li>已达标者以稳定性评分</li>
+                    </ul>
+                    <div class="modal-cite">来源：ACSM's Guidelines for Exercise Testing and Prescription, 11th Ed. (2021)</div>
+                </div>
+                <div class="modal-section">
+                    <h4>📅 坚持记录分（15分）— 自我监测依从性</h4>
+                    <p>依据《中国居民膳食指南(2022)》和行为减肥研究，定期自我监测体重是成功减重的关键预测因子：</p>
+                    <ul>
+                        <li>最近7天全部记录 → 15分满分</li>
+                        <li>记录6天 → 13分</li>
+                        <li>记录5天 → 11分</li>
+                        <li>记录天数越少得分越低</li>
+                    </ul>
+                    <div class="modal-cite">来源：Burke et al., AJCN 2011; 中国居民膳食指南2022</div>
+                </div>
+                <div class="modal-section">
+                    <h4>🔥 连续达标分（10分）— 习惯养成</h4>
+                    <p>参考行为心理学中习惯形成的研究（平均66天形成习惯），连续达标反映行为稳定性：</p>
+                    <ul>
+                        <li>连续≥7天达标 → 10分满分</li>
+                        <li>连续5天 → 8分</li>
+                        <li>连续3天 → 5分</li>
+                        <li>连续1天 → 2分</li>
+                    </ul>
+                    <div class="modal-cite">来源：Lally et al., European Journal of Social Psychology 2010</div>
+                </div>
+                <div class="modal-section">
+                    <h4>🏅 等级划分</h4>
+                    <p>S≥90（优秀）· A≥80（良好）· B≥70（较好）· C≥60（及格）· D≥40（需努力）· E<40（警告）</p>
+                    <p style="margin-top:8px;color:#888;font-size:12px">注：HPI指数为综合健康行为评分，仅供参考，不替代医学诊断。如有健康问题请咨询专业医生。</p>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // ====== 每日营养目标 ======
+    if(nutrition){
+        html+=`<div class="card">
+            <h2>每日营养目标 <span style="font-size:12px;color:#999;font-weight:400">· 基于你的年龄身高体重个性化计算</span></h2>
+            <div style="font-size:13px;color:#666;margin-bottom:6px">基础代谢 ${nutrition.bmr}kcal · 日常消耗 ${nutrition.tdee}kcal · 推荐摄入 <b style="color:#2F6B4F">${nutrition.targetCal}kcal</b>${nutrition.mode==="lose"?"（热量缺口500kcal，健康减脂）":""}</div>
+            <div class="daily-targets">
+                <div class="daily-target"><div class="dt-val">${nutrition.targetCal}</div><div class="dt-label">热量 kcal</div></div>
+                <div class="daily-target"><div class="dt-val">${nutrition.proteinG}g</div><div class="dt-label">蛋白质</div></div>
+                <div class="daily-target"><div class="dt-val">${nutrition.carbG}g</div><div class="dt-label">碳水</div></div>
+                <div class="daily-target"><div class="dt-val">${nutrition.fatG}g</div><div class="dt-label">脂肪</div></div>
+                <div class="daily-target"><div class="dt-val">${nutrition.water/1000}L</div><div class="dt-label">饮水</div></div>
+                <div class="daily-target"><div class="dt-val">${(nutrition.steps/1000).toFixed(0)}k</div><div class="dt-label">步数</div></div>
+            </div>
+        </div>`;
+    }
+
+    // ====== 饮食 & 运动记录 ======
+    const todayKey = state.inputDate || today();
+    const dietList = (state.data.diet && state.data.diet[state.activeId] && state.data.diet[state.activeId][todayKey]) || [];
+    const exList = (state.data.exercise && state.data.exercise[state.activeId] && state.data.exercise[state.activeId][todayKey]) || [];
+    const totalEat = dietList.reduce((s,i)=>s+(i.kcal||0),0);
+    const totalBurn = exList.reduce((s,i)=>s+(i.kcal||0),0);
+    const remain = nutrition ? (nutrition.targetCal - totalEat + totalBurn) : 0;
+    const remainColor = !nutrition?"#999":(remain<0?"#d03333":remain<nutrition.targetCal*0.2?"#e67e22":"#2F6B4F");
+
+    html+=`<div class="log-section">
+        <!-- 饮食记录 -->
+        <div class="log-card">
+            <h3>🍽️ 饮食记录</h3>
+            <div class="log-input-row">
+                <input id="foodNameInput" placeholder="输入食物，如：鸡胸肉、米饭" value="${escapeHtml(state.foodInput)}" oninput="state.foodInput=this.value;foodAutoMatch()">
+                <input id="foodCalInput" type="number" placeholder="kcal" value="${state.foodCal||""}" oninput="state.foodCal=this.value">
+            </div>
+            <div class="log-input-row">
+                <button class="log-btn log-btn-cam" onclick="document.getElementById('foodCam').click()">📷 拍照</button>
+                <button class="log-btn log-btn-cam" onclick="document.getElementById('foodFile').click()">🖼️ 选图</button>
+                <button class="log-btn log-btn-add" style="margin-left:auto" onclick="addFood()">+ 添加</button>
+                <input type="file" id="foodCam" class="file-input" accept="image/*" capture="environment" onchange="handleFoodImg(event)">
+                <input type="file" id="foodFile" class="file-input" accept="image/*" onchange="handleFoodImg(event)">
+            </div>
+            ${state.foodImg?`<div class="log-preview"><img src="${state.foodImg}" alt=""><span>已选图片</span><button class="log-item-del" onclick="state.foodImg=null;render()">×</button></div>`:""}
+            <div id="foodMatchHint"></div>
+            <div class="log-list">
+                ${dietList.length===0?`<div style="color:#bbb;font-size:12px;padding:20px 0;text-align:center">今天还没记录饮食，拍照或输入食物名称开始记录吧</div>`:
+                dietList.map((f,idx)=>`<div class="log-item">
+                    ${f.img?`<img src="${f.img}">`:"<div style='width:36px;height:36px;background:#f5f5f5;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0'>🍴</div>"}
+                    <div class="log-item-info">
+                        <div class="log-item-name">${escapeHtml(f.name)}</div>
+                        <div class="log-item-meta">${f.time||""}</div>
+                    </div>
+                    <div class="log-item-kcal">${f.kcal}kcal</div>
+                    <button class="log-item-del" onclick="delFood(${idx})">×</button>
+                </div>`).join("")}
+            </div>
+            <div class="log-sum">
+                <span>今日摄入</span><b>${totalEat} kcal</b>
+            </div>
+        </div>
+
+        <!-- 运动记录 -->
+        <div class="log-card">
+            <h3>🏃 运动记录</h3>
+            <div class="log-input-row">
+                <input id="exInput" placeholder="如：快跑30分、游泳1小时" value="${escapeHtml(state.exInput)}" oninput="state.exInput=this.value;exAutoMatch()">
+            </div>
+            <div class="log-input-row">
+                <button class="log-btn log-btn-cam" onclick="document.getElementById('exCam').click()">📷 拍照</button>
+                <button class="log-btn log-btn-cam" onclick="document.getElementById('exFile').click()">🖼️ 选图</button>
+                <button class="log-btn log-btn-add" style="margin-left:auto" onclick="addExercise()">+ 添加</button>
+                <input type="file" id="exCam" class="file-input" accept="image/*" capture="environment" onchange="handleExImg(event)">
+                <input type="file" id="exFile" class="file-input" accept="image/*" onchange="handleExImg(event)">
+            </div>
+            ${state.exImg?`<div class="log-preview"><img src="${state.exImg}" alt=""><span>已选图片</span><button class="log-item-del" onclick="state.exImg=null;render()">×</button></div>`:""}
+            <div id="exMatchHint"></div>
+            <div class="log-list">
+                ${exList.length===0?`<div style="color:#bbb;font-size:12px;padding:20px 0;text-align:center">输入运动如"快跑30分钟"自动计算消耗</div>`:
+                exList.map((e,idx)=>`<div class="log-item">
+                    ${e.img?`<img src="${e.img}">`:"<div style='width:36px;height:36px;background:#f5f5f5;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0'>💪</div>"}
+                    <div class="log-item-info">
+                        <div class="log-item-name">${escapeHtml(e.name)}</div>
+                        <div class="log-item-meta">${e.minutes}分钟 · MET ${e.met}</div>
+                    </div>
+                    <div class="log-item-kcal">-${e.kcal}kcal</div>
+                    <button class="log-item-del" onclick="delEx(${idx})">×</button>
+                </div>`).join("")}
+            </div>
+            <div class="log-sum">
+                <span>今日消耗</span><b>-${totalBurn} kcal</b>
+            </div>
+        </div>
+    </div>
+    `;
+
+    // 净卡路里平衡展示（替代旧卡路里计算器，数据来自饮食运动记录）
+    if(nutrition){
+        const netIn = totalEat - totalBurn;
+        const bmrKcal = nutrition.bmr;
+        const totalConsume = bmrKcal + totalBurn;
+        const inPct = Math.min(150, (totalEat/nutrition.targetCal)*100);
+        let balText="",balIcon="⚖️";
+        if(totalEat===0){balText="还没记录饮食，拍照或输入食物名称开始记录吧";balIcon="🍽️"}
+        else if(remain<0){balText=`已超目标 ${Math.abs(remain)}kcal，建议增加运动或减少摄入`;balIcon="⚠️"}
+        else if(remain<nutrition.targetCal*0.2){balText=`接近今日上限，注意控制`;balIcon="👀"}
+        else{balText=`还可摄入 ${remain}kcal，继续加油`;balIcon="✅"}
+        html+=`<div class="card">
+            <h2>今日卡路里 <span style="font-size:12px;color:#999;font-weight:400">· 目标 ${nutrition.targetCal}kcal</span></h2>
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:#666;margin-bottom:6px">
+                <span>已摄入 <b style="color:#333">${totalEat}kcal</b></span>
+                <span>基础代谢 ${bmrKcal} + 运动 ${totalBurn} = 共消耗 <b style="color:#333">${totalConsume}kcal</b></span>
+            </div>
+            <div class="calc-bar" style="margin-bottom:10px">
+                <div class="calc-bar-fill" style="width:${Math.min(100,inPct)}%;background:${inPct>100?'#d03333':inPct>80?'#f39c12':'#2F6B4F'}"></div>
+            </div>
+            <div class="cal-balance" style="margin-top:0">
+                <div class="cal-balance-icon">${balIcon}</div>
+                <div class="cal-balance-text">
+                    <div><span class="cal-balance-num" style="color:${remainColor}">${Math.abs(remain)}kcal</span></div>
+                    <div class="cal-balance-sub">净摄入 ${netIn}kcal · 目标 ${nutrition.targetCal}kcal${totalBurn>0?` · 运动额外消耗${totalBurn}kcal`:""}</div>
+                    <div style="margin-top:4px;color:#555">${balText}</div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // ====== 身材进度可视化 ======
+    if(currentW!=null){
+        let curScale=1;
+        if(currentW>tMax){
+            const overRatio=(currentW-tMax)/tMax;
+            curScale=1+overRatio*1.2;
+        }else if(currentW<tMin){
+            const underRatio=(tMin-currentW)/tMin;
+            curScale=1-underRatio*0.8;
+        }
+        curScale=Math.max(0.75,Math.min(1.35,curScale));
+
+        const modeText = nutrition?(nutrition.mode==="lose"?"减脂":nutrition.mode==="gain"?"增肌增重":"塑形增肌"):"";
+        const actionText = currentW>tMax
+            ? `再减 <strong>${toGo}kg</strong> 就能达到理想${shapeInfo.name}身材！按每周减0.5-1kg的健康速度，预计 <strong>${Math.ceil(toGo/0.75)}-${Math.ceil(toGo/0.5)}</strong> 周达成目标`
+            : currentW<tMin
+            ? `需增重 <strong>${toGo}kg</strong>，增加蛋白质和优质碳水，配合力量训练增肌`
+            : `恭喜！你已是${shapeInfo.name}身材，当前<b>${modeText}</b>阶段，重点通过力量训练雕刻身体线条`;
+
+        html+=`<div class="card">
+            <h2>身材变化对比</h2>
+            <div class="progress-visual">
+                <div class="progress-figure fig-current">
+                    ${shapeSvg(active.shape,60,active.color+"66",curScale)}
+                    <div class="fig-weight">${currentW}kg</div>
+                    <div class="fig-label">现在 · ${currentShapeLabel}</div>
+                </div>
+                <div class="progress-arrow">→</div>
+                <div class="progress-figure fig-target">
+                    ${shapeSvg(active.shape,60,active.color,1)}
+                    <div class="fig-weight">${tMid.toFixed(1)}kg</div>
+                    <div class="fig-label">目标${shapeInfo.name}</div>
+                </div>
+            </div>
+            <div class="progress-detail">${actionText}</div>
+        </div>`;
+    }
+
+    // ====== 三餐推荐（个性化）======
+    if(nutrition){
+        const seed=daySeed(dateStr)+active.id.charCodeAt(0)+(state.data.mealSeed||0);
+        const plan=getMealPlan(nutrition,seed);
+        const totalRecCal=plan.bf.cal+plan.lc.cal+plan.dn.cal;
+
+        const modeLabel = nutrition.mode==="lose"?"减脂方案":nutrition.mode==="gain"?"增重增肌方案":"塑形增肌方案";
+        const modeEmoji = nutrition.mode==="lose"?"🔥":nutrition.mode==="gain"?"💪":"✨";
+
+        function macroTags(m){
+            return `<div class="meal-macros">
+                <span class="macro-tag protein">蛋白${m.protein}g</span>
+                <span class="macro-tag carbs">碳水${m.carb}g</span>
+                <span class="macro-tag fat">脂肪${m.fat}g</span>
+                <span class="macro-tag cal">${m.cal}kcal</span>
+            </div>`;
+        }
+
+        html+=`<div class="card">
+            <h2>${modeEmoji} 今日推荐餐 <span style="font-size:12px;color:#999;font-weight:400">· ${modeLabel} · 三餐约${totalRecCal}kcal</span></h2>
+            <div style="font-size:12px;color:#888;margin-bottom:6px">基于你的年龄${active.age}岁、身高${active.height}cm、体重${currentW}kg、${active.sex==="女"?"女性":"男性"}，每日目标：蛋白${nutrition.proteinG}g · 碳水${nutrition.carbG}g · 脂肪${nutrition.fatG}g</div>
+            <div class="meal-day">
+                <div class="meal-card">
+                    <div class="meal-type"><span class="meal-icon">🌅</span>早餐 · 30%</div>
+                    <div class="meal-name">${plan.bf.name}</div>
+                    <div class="meal-desc">${plan.bf.desc}</div>
+                    ${macroTags(plan.bf)}
+                    <div class="meal-actions"><button class="btn-main btn-sm" onclick="applyRecCal('breakfast',${plan.bf.cal})">记录</button></div>
+                </div>
+                <div class="meal-card">
+                    <div class="meal-type"><span class="meal-icon">☀️</span>午餐 · 40%</div>
+                    <div class="meal-name">${plan.lc.name}</div>
+                    <div class="meal-desc">${plan.lc.desc}</div>
+                    ${macroTags(plan.lc)}
+                    <div class="meal-actions"><button class="btn-main btn-sm" onclick="applyRecCal('lunch',${plan.lc.cal})">记录</button></div>
+                </div>
+                <div class="meal-card">
+                    <div class="meal-type"><span class="meal-icon">🌙</span>晚餐 · 30%</div>
+                    <div class="meal-name">${plan.dn.name}</div>
+                    <div class="meal-desc">${plan.dn.desc}</div>
+                    ${macroTags(plan.dn)}
+                    <div class="meal-actions"><button class="btn-main btn-sm" onclick="applyRecCal('dinner',${plan.dn.cal})">记录</button></div>
+                </div>
+            </div>
+            <div style="margin-top:10px">
+                <button class="btn-gray btn-sm" onclick="shuffleMeals()">🔄 换一批</button>
+                <button class="btn-main btn-sm" onclick="applyAllRec(${plan.bf.cal},${plan.lc.cal},${plan.dn.cal})">一键记录全部</button>
+            </div>
+            <div style="margin-top:10px;padding:10px;background:#f8faf9;border-radius:8px;font-size:12px;color:#666;line-height:1.6">
+                <b>${nutrition.mode==="lose"?"减脂小贴士":nutrition.mode==="gain"?"增肌小贴士":"塑形小贴士"}：</b>${nutrition.tips}。每日饮水${nutrition.water}ml，蔬菜不少于500g，${nutrition.mode==="lose"?"烹饪少油少盐，晚餐19点前完成，每周5次有氧+2次力量训练":nutrition.mode==="gain"?"训练后30分钟内补充蛋白质和碳水，保证充足睡眠8小时，每周4-5次力量训练":"每周4次力量训练+2-3次有氧，重点训练薄弱部位，蛋白质均匀分配到三餐"}。
+            </div>
+        </div>`;
+    }
+
+    // ====== 体重趋势 ======
+    html+=`<div class="card"><h2>体重趋势</h2>`;
+    if(records.length<2){
+        html+="<p style='color:#bbb;font-size:13px'>至少两条记录显示曲线</p>";
+    }else{
+        html+=`<canvas id="chartMain"></canvas>`;
+        setTimeout(()=>drawChart("chartMain",records,tMin,tMax,active.color),0);
+    }
+    html+="</div>";
+
+    // ====== 历史记录 ======
+    if(records.length>0){
+        html+=`<div class="card"><h2>历史记录</h2><table><thead><tr><th>日期</th><th>体重</th><th>BMI</th><th>状态</th><th></th></tr></thead><tbody>`;
+        [...records].reverse().forEach(r=>{
+            const w=Number(r.w);
+            const bmi=calcBMI(w,active.height);
+            const bi=getBMIInfo(bmi);
+            const inR=w>=tMin&&w<=tMax;
+            html+=`<tr>
+                <td>${escapeHtml(r.d)}</td>
+                <td><b>${escapeHtml(r.w)}</b>kg</td>
+                <td style="color:${bi.color}">${bmi}</td>
+                <td>${inR?"<span style='color:#227043'>✓ 达标</span>":w>tMax?`<span style="color:${bi.color}">${bi.level}</span>`:`<span style="color:#486da8">${bi.level}</span>`}</td>
+                <td><button class="btn-gray btn-sm" onclick="delRec('${escapeHtml(r.d)}')">删除</button></td>
+            </tr>`;
+        });
+        html+="</tbody></table></div>";
+    }
+
+    // 编辑面板已移至顶部
+
+    html+=`<footer>连续${STABLE_TARGET}天落在理想身材区间即为塑形成功 · 数据保存在本地浏览器 · 健康减肥 每周0.5-1kg</footer>`;
+    app.innerHTML=html;
+}
+
+// ===================== 交互 =====================
+window.switchUser=function(id){state.activeId=id;state.inputDate=today();state.inputWeight="";render()};
+window.openAdd=function(){state.edit=true;state.draft={id:null,name:"",age:"",height:"",sex:"女",shape:"X"};render()};
+window.editUser=function(id){const u=state.data.people.find(p=>p.id===id);if(!u)return;state.edit=true;state.draft={...u};render()};
+window.closeEdit=function(){state.edit=false;state.draft=null;render()};
+window.draftSet=function(k,v){state.draft[k]=v};
+window.pickShape=function(k){state.draft.shape=k;render()};
+window.saveDraft=function(){
+    const d=state.draft;const age=+d.age,ht=+d.height;
+    if(!String(d.name).trim()||!isFinite(age)||!isFinite(ht)){showTip("请填完整信息");return}
+    if(age<1||age>120||ht<50||ht>250){showTip("年龄或身高数值错误");return}
+    const nd=cloneData(state.data);
+    if(d.id){
+        nd.people=nd.people.map(p=>p.id===d.id?{...p,...d,name:String(d.name).trim(),age,height:ht}:p);
+    }else{
+        const nid="u"+Date.now();
+        nd.people.push({id:nid,name:String(d.name).trim(),age,height:ht,sex:d.sex,shape:d.shape||"X",color:COLORS[nd.people.length%COLORS.length]});
+        nd.records[nid]=[];state.activeId=nid;
+    }
+    save(nd);state.data=nd;state.edit=false;showTip("保存成功");render();
+};
+window.delUser=function(id){
+    if(!confirm("确定删除该成员所有数据？"))return;
+    const nd=cloneData(state.data);
+    delete nd.records[id];
+    Object.keys(nd.meals).forEach(k=>{if(k.endsWith("_"+id))delete nd.meals[k]});
+    nd.people=nd.people.filter(p=>p.id!==id);
+    save(nd);state.data=nd;state.activeId=nd.people[0]?.id||"";state.edit=false;render();
+};
+window.formDate=function(v){state.inputDate=v;render()};
+window.formW=function(v){state.inputWeight=v};
+window.saveRec=function(){
+    const w=parseFloat(state.inputWeight);
+    if(!state.inputDate){showTip("请选择日期");return}
+    if(isNaN(w)||w<10||w>300){showTip("体重数值错误");return}
+    const nd=cloneData(state.data);
+    if(!nd.records[state.activeId])nd.records[state.activeId]=[];
+    const list=nd.records[state.activeId].filter(r=>r.d!==state.inputDate);
+    list.push({d:state.inputDate,w:+w.toFixed(1)});
+    list.sort((a,b)=>a.d.localeCompare(b.d));
+    nd.records[state.activeId]=list;
+    save(nd);state.data=nd;state.inputWeight="";showTip("记录已存");render();
+};
+window.delRec=function(date){
+    const nd=cloneData(state.data);
+    nd.records[state.activeId]=(nd.records[state.activeId]||[]).filter(r=>r.d!==date);
+    save(nd);state.data=nd;render();
+};
+
+window.setMeal=function(k,v){
+    const m=getMeals(state.activeId,state.inputDate);
+    m[k]=v===""?0:(Number(v)||0);
+    setMeals(state.activeId,state.inputDate,m);
+    updateCalcDisplay();
+};
+function updateCalcDisplay(){
+    const active=state.data.people.find(p=>p.id===state.activeId);
+    if(!active)return;
+    const records=(state.data.records[active.id]||[]).sort((a,b)=>a.d.localeCompare(b.d));
+    const lastRec=records[records.length-1];
+    const todayRec=records.find(r=>r.d===state.inputDate);
+    const currentW=todayRec?+todayRec.w:(lastRec?+lastRec.w:null);
+    if(currentW==null)return;
+    const meals=getMeals(active.id,state.inputDate);
+    const bmr=calcBMR(currentW,active.height,active.age,active.sex);
+    const bmi=calcBMI(currentW,active.height);
+    let nutMode;
+    if(bmi<18.5) nutMode="gain";
+    else if(bmi>=24) nutMode="lose";
+    else nutMode="shape";
+    const nut=calcNutrition(currentW,active.height,active.age,active.sex,nutMode);
+    const actFactor = nutMode==="shape"?1.55:1.375;
+    const act=Math.round(bmr*(actFactor-1));
+    const tin=+(meals.breakfast||0) + +(meals.lunch||0) + +(meals.dinner||0) + +(meals.snack||0);
+    const tout=Math.round(bmr*actFactor) + +(meals.exercise||0);
+    const rem=tin-tout;
+    const overCal = Math.max(0, tin - nut.targetCal);
+    const remainCal = Math.max(0, nut.targetCal - tin);
+    const pct=nut.targetCal>0?Math.min(100,(tin/nut.targetCal)*100):0;
+
+    const cards=document.querySelectorAll(".calc-result");
+    if(cards.length===0)return;
+    const cr=cards[0];
+    const rows=cr.querySelectorAll(".calc-result-row");
+    if(rows.length>=3){
+        rows[0].querySelectorAll("span")[1].textContent=`${tin} / ${nut.targetCal}kcal`;
+        rows[1].querySelectorAll("span")[1].textContent=tout+"kcal";
+        const big=rows[2];
+        big.classList.toggle("over",tin>nut.targetCal);
+        if(tin<=nut.targetCal){
+            big.querySelectorAll("span")[0].textContent=`还可摄入 ${remainCal}kcal`;
+        }else{
+            big.querySelectorAll("span")[0].textContent=`已超 ${overCal}kcal！`;
+        }
+        big.querySelector(".val").textContent=(tin>nut.targetCal?"+":"")+(tin-tout);
+    }
+    const bar=cr.querySelector(".calc-bar-fill");
+    if(bar){
+        bar.style.width=pct+"%";
+        bar.style.background=pct>100?"#d03333":pct>80?"#f39c12":"#2F6B4F";
+    }
+    const tip=cr.querySelector(".calc-tip");
+    if(tip){
+        if(tin===0) tip.textContent="记录你的三餐热量，科学管理每日摄入";
+        else if(pct>100) tip.textContent="⚠️ 今日热量已超标！建议减少摄入或增加运动消耗";
+        else if(pct>85) tip.textContent="接近目标，注意不要再吃零食了";
+        else if((tout-tin)<-500) tip.textContent="缺口较大，注意不要过度节食";
+        else tip.textContent="进度良好，保持均衡营养搭配";
+    }
+}
+window.applyRecCal=function(type,cal){
+    const m=getMeals(state.activeId,state.inputDate);
+    m[type]=cal;
+    setMeals(state.activeId,state.inputDate,m);
+    render();
+};
+window.applyAllRec=function(bf,lc,dn){
+    const m=getMeals(state.activeId,state.inputDate);
+    m.breakfast=bf;m.lunch=lc;m.dinner=dn;
+    setMeals(state.activeId,state.inputDate,m);
+    showTip("已记录三餐热量");
+    render();
+};
+window.shuffleMeals=function(){
+    state.data.mealSeed=(state.data.mealSeed||0)+1;
+    save(state.data);
+    render();
+};
+window.openHpiModal=function(){
+    state.showHpiModal=true;
+    render();
+};
+window.closeHpiModal=function(){
+    state.showHpiModal=false;
+    render();
+};
+
+// ====== 饮食记录 ======
+window.foodAutoMatch=function(){
+    const val=document.getElementById("foodNameInput")?.value||"";
+    const hint=document.getElementById("foodMatchHint");
+    const calInput=document.getElementById("foodCalInput");
+    const m=matchFood(val);
+    if(m){
+        if(hint)hint.innerHTML=`<div class="log-match">识别到：${m.matchedKw} · ${m.unit}约 ${m.unitKcal}kcal（每100g ${m.kcal}kcal）<button class="log-btn log-btn-cam" style="margin-left:6px;padding:2px 8px;font-size:11px" onclick="useFoodHint(${m.unitKcal})">填入</button></div>`;
+    }else{
+        if(hint)hint.innerHTML="";
+    }
+};
+window.useFoodHint=function(kcal){
+    state.foodCal=kcal;
+    const calInput=document.getElementById("foodCalInput");
+    if(calInput)calInput.value=kcal;
+    render();
+};
+window.handleFoodImg=async function(ev){
+    const f=ev.target.files&&ev.target.files[0];
+    if(!f)return;
+    const url=await fileToDataUrl(f);
+    state.foodImg=url;
+    // 简单提示：纯前端无法做AI识别，需手动输入卡路里
+    showTip("图片已添加，请输入食物名称和卡路里");
+    render();
+    setTimeout(()=>{const inp=document.getElementById("foodNameInput");if(inp)inp.focus()},100);
+};
+window.addFood=function(){
+    const name=state.foodInput.trim();
+    let kcal=parseInt(state.foodCal);
+    if(!name){showTip("请输入食物名称");return}
+    if(!kcal||kcal<=0){
+        const m=matchFood(name);
+        if(m)kcal=m.unitKcal;
+        else{showTip("请输入卡路里或选择常见食物");return}
+    }
+    const nd=cloneData(state.data);
+    if(!nd.diet[state.activeId])nd.diet[state.activeId]={};
+    const tk=state.inputDate||today();
+    if(!nd.diet[state.activeId][tk])nd.diet[state.activeId][tk]=[];
+    const now=new Date();
+    const time=`${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+    nd.diet[state.activeId][tk].push({name,kcal,img:state.foodImg,time});
+    state.data=nd;save(nd);
+    state.foodInput="";state.foodCal="";state.foodImg=null;
+    showTip("已记录 "+name+" "+kcal+"kcal");
+    render();
+};
+window.delFood=function(idx){
+    const nd=cloneData(state.data);
+    const tk=state.inputDate||today();
+    if(nd.diet[state.activeId]&&nd.diet[state.activeId][tk]){
+        nd.diet[state.activeId][tk].splice(idx,1);
+        state.data=nd;save(nd);render();
+    }
+};
+
+// ====== 运动记录 ======
+function getCurWeight(){
+    const recs=(state.data.records[state.activeId]||[]);
+    if(recs.length)return recs[recs.length-1].w;
+    return 65;
+}
+window.exAutoMatch=function(){
+    const val=document.getElementById("exInput")?.value||"";
+    const hint=document.getElementById("exMatchHint");
+    const w=getCurWeight();
+    const r=parseExercise(val,w);
+    if(r){
+        state.exResult=r;
+        if(hint)hint.innerHTML=`<div class="log-match">识别到：${r.label} ${r.minutes}分钟（MET ${r.met}）· 预计消耗 <b>${r.kcal}kcal</b></div>`;
+    }else{
+        state.exResult=null;
+        if(hint)hint.innerHTML="";
+    }
+};
+window.handleExImg=async function(ev){
+    const f=ev.target.files&&ev.target.files[0];
+    if(!f)return;
+    const url=await fileToDataUrl(f);
+    state.exImg=url;
+    showTip("图片已添加，输入运动内容（如：快跑30分）");
+    render();
+    setTimeout(()=>{const inp=document.getElementById("exInput");if(inp)inp.focus()},100);
+};
+window.addExercise=function(){
+    const text=state.exInput.trim();
+    if(!text){showTip("请输入运动内容");return}
+    const w=getCurWeight();
+    const r=parseExercise(text,w);
+    if(!r){showTip("无法识别，请写清楚如\"快跑30分\"");return}
+    const nd=cloneData(state.data);
+    if(!nd.exercise[state.activeId])nd.exercise[state.activeId]={};
+    const tk=state.inputDate||today();
+    if(!nd.exercise[state.activeId][tk])nd.exercise[state.activeId][tk]=[];
+    const now=new Date();
+    const time=`${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+    nd.exercise[state.activeId][tk].push({name:text,minutes:r.minutes,met:r.met,kcal:r.kcal,img:state.exImg,time});
+    state.data=nd;save(nd);
+    state.exInput="";state.exResult=null;state.exImg=null;
+    showTip(`已记录 ${r.label} ${r.minutes}分钟 消耗${r.kcal}kcal`);
+    render();
+};
+window.delEx=function(idx){
+    const nd=cloneData(state.data);
+    const tk=state.inputDate||today();
+    if(nd.exercise[state.activeId]&&nd.exercise[state.activeId][tk]){
+        nd.exercise[state.activeId][tk].splice(idx,1);
+        state.data=nd;save(nd);render();
+    }
+};
+
+// ===================== 初始化 =====================
+function init(){
+    const local=load();
+    if(local&&Array.isArray(local.people)&&local.records){
+        state.data=local;
+        if(!state.data.meals)state.data.meals={};
+        if(!state.data.diet) state.data.diet={};
+        if(!state.data.exercise) state.data.exercise={};
+        if(state.data.mealSeed==null)state.data.mealSeed=0;
+        state.data.people.forEach(p=>{
+            if(!state.data.records[p.id])state.data.records[p.id]=[];
+        });
+        state.activeId=local.people[0]?.id||"";
+    }else{
+        state.data=cloneData(initData);
+        state.data.diet={};
+        state.data.exercise={};
+        save(state.data);
+        state.activeId=state.data.people[0]?.id||"";
+    }
+    state.loading=false;
+    state.inputDate=today();
+    render();
+}
+window.addEventListener("resize",()=>{
+    const a=state.data?.people.find(p=>p.id===state.activeId);if(!a)return;
+    const rs=state.data.records[a.id]||[];if(rs.length<2)return;
+    const [mn,mx]=getWeightRange(a.height,a.shape);
+    drawChart("chartMain",rs,mn,mx,a.color);
+});
+init();
+</script>
+</body>
+</html>
